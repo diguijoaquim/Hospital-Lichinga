@@ -32,7 +32,7 @@ def assistente(page):
         pergunta = {
             "text": p
         }
-        resposta = requests.post(url="http://192.168.43.13:8000/dina", json=pergunta)
+        resposta = requests.post(url="http://192.168.1.62:8000/dina", json=pergunta)
         chatList.controls.append(ft.Text(f"Assistente: >>>{resposta.json()}", color="black", size=20, weight="bold", no_wrap=False)),
         page.update()
 
@@ -115,6 +115,7 @@ def tabela(data, page, update_app):
     reparticao_update = ft.Dropdown(
         label="Repartição",
         options=[
+            ft.dropdown.Option("Nenhuma reparticao"),
             ft.dropdown.Option("Assistência Jurídica"),
             ft.dropdown.Option("Assistência Social"),
             ft.dropdown.Option("Patrimônio"),

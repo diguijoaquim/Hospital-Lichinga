@@ -272,7 +272,7 @@ def main(page: ft.Page):
         ]
     )
     sector_s = ft.Dropdown(
-    label="Setor",
+    label="Sector",
     width=220,
     options=[
         ft.dropdown.Option("Laboratório"),
@@ -314,7 +314,7 @@ def main(page: ft.Page):
     ]
 )
     sector = ft.Dropdown(
-    label="Setor",
+    label="Sector",
     options=[
         ft.dropdown.Option("Laboratório"),
         ft.dropdown.Option("Maternidade"),
@@ -339,6 +339,7 @@ def main(page: ft.Page):
     reparticao = ft.Dropdown(
     label="Repartição",
     options=[
+        ft.dropdown.Option("Nenhuma Reparticao"),
         ft.dropdown.Option("Assistência Jurídica"),
         ft.dropdown.Option("Assistência Social"),
         ft.dropdown.Option("Patrimônio"),
@@ -539,26 +540,101 @@ def main(page: ft.Page):
         ],
     
     )
+    def cl(e):
+        perfil.open=False
+        page.update()
 
     def open_cadastro_dialogo(e):
         page.dialog=cadastro_dialogo
         cadastro_dialogo.open=True
         page.update()
 
+    perfil=ft.AlertDialog(title=ft.Text("Perfil"),)
+    def seeprofile(e):
+        usuario=getUser()
+
+        perfil.content=ft.Column(height=140,controls=[
+                ft.Row(
+                    controls=[
+                        ft.Text("Nome: ",weight="bold"),ft.Text(usuario['username'])
+                    ]
+                ),
+                ft.Row(
+                    controls=[
+                        ft.Text("Contact: ",weight="bold"),ft.Text(usuario['contact'])
+                    ]
+                ),
+                ft.ElevatedButton("minimizar",bgcolor=ft.colors.GREEN_600,on_click=cl,color="white")
+        ])
+        page.dialog=perfil
+        perfil.open=True
+        page.update()
+
+
+    def log_out(e):
+        remove_token()
+        atualizar_app(page)
+
+    
+    new_user_dlg=ft.AlertDialog(title=ft.Text("Novo Usuario"))
+    new_username=ft.TextField(label="Nome do Usuario",width=250)
+    new_contact=ft.TextField(label="Contacto",width=250)
+    new_pass=ft.TextField(label="senha",width=250)
+
+
+    alert_erro=ft.AlertDialog(title=ft.Text("Erro Ao Cadastrar"),content=ft.Row(controls=[
+        ft.Icon(ft.icons.ERROR,color="red"),ft.Text("Ocorreu um erro ao cadastrar!")
+    ]))
+    alert_sucesso=ft.AlertDialog(title=ft.Text("Feito com exito"),content=ft.Row(controls=[
+        ft.Icon(ft.icons.INFO,color="green"),ft.Text("Cadastrado com sucesso")
+    ]))
+
+    def alert_s():
+        page.dialog=alert_sucesso
+        alert_sucesso.open=True
+        page.update()
+
+    def alert_e():
+        page.dialog=alert_erro
+        alert_erro.open=True
+        page.update()
+    def add_new_user(e):
+        data={
+        "name":new_username.value,
+        "contact":new_contact.value,
+        "password":new_pass.value}
+        status_code=NovoUsuario(data)
+        if status_code ==200:
+            print("cadastrado")
+            alert_s()
+        else:
+            print("ocoreu um erro")
+            alert_e()
+
+    def new_user(e):
+        page.dialog=new_user_dlg
+        new_user_dlg.open=True
+        new_user_dlg.content=ft.Column(height=240,controls=[
+            new_username,new_contact,new_pass,
+            ft.CupertinoButton("Cadastrar",bgcolor=ft.colors.GREEN_600,width=250,on_click=add_new_user)
+        ])
+        page.update()
 
     # Ações do AppBar
-    search_action = ft.IconButton(icon=ft.icons.SEARCH, on_click=search_function)
-    settings_action = ft.IconButton(icon=ft.icons.SETTINGS, on_click=settings_function)
-    notifications_action = ft.IconButton(icon=ft.icons.NOTIFICATIONS, on_click=notifications_function)
-    profile_action = ft.IconButton(icon=ft.icons.PERSON, on_click=profile_function)
-    help_action = ft.IconButton(icon=ft.icons.HELP, on_click=help_function)
+    pm=ft.PopupMenuButton(
+        items=[
+            ft.PopupMenuItem("Ver Perfil",on_click=seeprofile),
+            ft.PopupMenuItem("Terminar sessao",on_click=log_out),
+            ft.PopupMenuItem("Novo usuario",on_click=new_user)
+        ]
+    )
 
     page.appbar = ft.AppBar(
         bgcolor=ft.colors.GREEN_700,
         color=ft.colors.WHITE,
         leading=ft.Icon(ft.icons.LOCAL_HOSPITAL),
         title=ft.Text("Hospital de Lichinga"),
-        actions=[search_action, settings_action, notifications_action, profile_action, help_action]
+        actions=[pm]
     )
     rail = ft.NavigationRail(
         selected_index=0,

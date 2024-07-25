@@ -3,13 +3,16 @@ from save_token import *
 #aqui sao controlers do app main.py
 token=get_token()
 
+
+
+
 def login(n, s):
     global token, headers
     data = {
         'username': n,
         'password': s
     }
-    res = requests.post("http://192.168.43.13:8000/token", data=data)
+    res = requests.post("http://192.168.1.62:8000/token", data=data)
     if res.status_code == 200:
         token = res.json()['access_token']
         save_token(token)
@@ -17,6 +20,10 @@ def login(n, s):
         headers['Authorization'] = f"Bearer {token}"
     return res.json()
 
+def getUser():
+    url = 'http://192.168.1.62:8000/users/me'
+    res=requests.get(url=url,headers=headers)
+    return res.json()
 # Controlador para as requisições
 headers = {
     'accept': 'application/json',
@@ -25,7 +32,7 @@ headers = {
 
 
 def getFuncionarios():
-    url = 'http://192.168.43.13:8000/employers/'
+    url = 'http://192.168.1.62:8000/employers/'
     try:
         response = requests.get(url, headers=headers)
         response.raise_for_status()  # Levanta uma exceção para status codes 4xx/5xx
@@ -41,11 +48,11 @@ def getFuncionarios():
     
     return []
 def GetEmployerByID(id):
-    url = f'http://192.168.43.13:8000/employer/{id}'
+    url = f'http://192.168.1.62:8000/employer/{id}'
     return requests.get(url, headers=headers)
     
 def getFuncionariosByQuery(query):
-    url = f'http://192.168.43.13:8000/employers/?search={query}'
+    url = f'http://192.168.1.62:8000/employers/?search={query}'
     response = requests.get(url, headers=headers)
     if response.status_code == 200:
         data = response.json()
@@ -54,12 +61,12 @@ def getFuncionariosByQuery(query):
     return []
 
 def addEmployer(data):
-    url = 'http://192.168.43.13:8000/employers/'
+    url = 'http://192.168.1.62:8000/employers/'
     response = requests.post(url, headers=headers, json=data)
     return response.status_code
 
 def UpdateEmployer(data,id):
-    url = f'http://192.168.43.13:8000/employers/{id}'
+    url = f'http://192.168.1.62:8000/employers/{id}'
     response = requests.put(url, headers=headers,json=data)
     if response.status_code == 200:
         data = response.json()
@@ -68,7 +75,7 @@ def UpdateEmployer(data,id):
     return response.status_code
 
 def getEmployerByGenre(genre):
-    url = f'http://192.168.43.13:8000/employers/genre/{genre}'
+    url = f'http://192.168.1.62:8000/employers/genre/{genre}'
     response = requests.get(url, headers=headers)
     if response.status_code == 200:
         data = response.json()
@@ -77,7 +84,7 @@ def getEmployerByGenre(genre):
     return []
 
 def getEmployerByProvince(p):
-    url = f'http://192.168.43.13:8000/employers/province/{p}'
+    url = f'http://192.168.1.62:8000/employers/province/{p}'
     response = requests.get(url, headers=headers)
     if response.status_code == 200:
         data = response.json()
@@ -86,7 +93,7 @@ def getEmployerByProvince(p):
     return []
 
 def getEmployerByReparticao(r):
-    url = f'http://192.168.43.13:8000/employers/reparticao/{r}'
+    url = f'http://192.168.1.62:8000/employers/reparticao/{r}'
     try:
         response = requests.get(url, headers=headers)
         if response.status_code == 200:
@@ -96,7 +103,7 @@ def getEmployerByReparticao(r):
     except:
         return []
 def getEmployerBySector(s):
-    url = f'http://192.168.43.13:8000/employers/sector/{s}'
+    url = f'http://192.168.1.62:8000/employers/sector/{s}'
     try:
         response = requests.get(url, headers=headers)
         if response.status_code == 200:
@@ -106,7 +113,7 @@ def getEmployerBySector(s):
     except:
         return []
 def DeleteEmployerByID(id):
-    url = f'http://192.168.43.13:8000/employers/{id}'
+    url = f'http://192.168.1.62:8000/employers/{id}'
     response = requests.delete(url, headers=headers)
     if response.status_code == 200:
         data = response.json()
@@ -128,7 +135,7 @@ def check_token(t):
             print(headers)
 
 
-            url = 'http://192.168.43.13:8000/employers/'
+            url = 'http://192.168.1.62:8000/employers/'
             response = requests.get(url, headers=header)
             if response.status_code == 200:
                 data = response.json()
@@ -137,7 +144,7 @@ def check_token(t):
                 
 def getSectores():
     try:
-        res=requests.get("http://192.168.43.13:8000/employers/sectors")
+        res=requests.get("http://192.168.1.62:8000/employers/sectors")
         return res.json()
     except:
         return "network_error"
@@ -163,5 +170,9 @@ def getSectoresCount():
         "psiquiatria":len(psiquiatria)
     }
 
-            
+def NovoUsuario(data):
+    url = 'http://192.168.1.62:8000/users/' 
+    res=requests.post(url,json=data)   
+
+    return res.status_code 
             
