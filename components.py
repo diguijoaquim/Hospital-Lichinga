@@ -19,6 +19,10 @@ def employer(page):
 nome_update = ft.TextField(label="Nome do Funcionario")
 apelido_update = ft.TextField(label="Apelido do Funcionario")
 bi_update = ft.TextField(label="Numero de BI")
+especialidade_update=ft.TextField(label="Especialidade" )
+faixa_etaria_update=ft.TextField(label="Faixa Etaria" )
+categoria_update=ft.TextField(label="Categoria" )
+nuit_update=ft.TextField(label="Nuit" )
 sexo_update = ft.Dropdown(
         label="Sexo",
         options=[
@@ -32,7 +36,7 @@ def assistente(page):
         pergunta = {
             "text": p
         }
-        resposta = requests.post(url="http://192.168.1.62:8000/dina", json=pergunta)
+        resposta = requests.post(url="http://127.0.0.1:8000/dina", json=pergunta)
         chatList.controls.append(ft.Text(f"Assistente: >>>{resposta.json()}", color="black", size=20, weight="bold", no_wrap=False)),
         page.update()
 
@@ -51,7 +55,7 @@ def assistente(page):
     )
     return ft.Column(
         controls=[
-            ft.Text("ASSISTENTE INTELIGENTE - POWERED BY LLAMA2"),
+            ft.Text("ASSISTENTE INTELIGENTE - POWERED BY LLAMA3"),
             ft.Column(controls=[
                 chatList, chat_input
             ])
@@ -77,6 +81,20 @@ def tabela(data, page, update_app):
     def show_success_dialog():
         page.dialog = dlg
         dlg.open = True
+        nome_update.value=''
+        apelido_update.value=''
+        nuit_update.value=''
+        bi_update.value=''
+        provincia_update.value=''
+        naturalidade_update.value=''
+        carreira_update.value=''
+        reparticao_update.value=''
+        sexo_update.value=''
+        especialidade_update.value=''
+        nuit_update.value=''
+        categoria_update.value=''
+        faixa_etaria_update.value=''
+        
         page.update()
 
     def atualizar(e):
@@ -181,10 +199,10 @@ def tabela(data, page, update_app):
         content = ft.Column(controls=[
             ft.Row(controls=[
                 ft.Column(controls=[
-                    nome_update, apelido_update, bi_update, provincia_update, naturalidade_update,
+                    nome_update, apelido_update, bi_update, nuit_update,faixa_etaria_update,provincia_update, naturalidade_update,
                 ]),
                 ft.Column(controls=[
-                    residencia_update, sexo_update, carreira_update, sector_update, reparticao_update
+                    residencia_update, sexo_update,especialidade_update,categoria_update, carreira_update, sector_update, reparticao_update
                 ]),
             ]), 
             progressBar_update, demo_erro_update
@@ -197,7 +215,7 @@ def tabela(data, page, update_app):
     def open_update(e):
         global selected_id
         global sexo_update
-        selected_id = e.control.key
+        selected_id = e.control.data
         print(selected_id)
         atualizar_dialogo.open = True
         page.update()
@@ -223,21 +241,84 @@ def tabela(data, page, update_app):
         show_dlg.open=False
         page.update()
         
-    show_dlg=ft.AlertDialog(title=ft.Text(''),content=ft.Container(),actions=[
+    show_dlg=ft.AlertDialog(title=ft.Text(''),content=ft.Container(ft.ProgressRing()),actions=[
         ft.ElevatedButton("fechar",bgcolor=ft.colors.RED_700,color='white',on_click=fecha),
         ft.ElevatedButton("Imprimir",bgcolor=ft.colors.GREEN_700,color='white')
     ])
+    input_to=ft.TextField(label="Foi Trasferido para que hospital?")
+    def show_input_t(e):
+        status_dlg.content=ft.Column(height=200,controls=[
+        ft.Text("Atualizar a Disponiblidade",weight="bold"),
+        status,input_to,
+        
+        ft.CupertinoButton(text="Atualizar o status",bgcolor=ft.colors.GREEN_700)
+        ])
+        page.update()
+    inicio_l=ft.TextField(label="Inicio das ferias ex:28/11/2024")
+    fim_l=ft.TextField(label="Fim das ferias ex:28/11/2024")
+    def show_input_l(e):
+        status_dlg.content=ft.Column(height=260,controls=[
+        ft.Text("Atualizar a Disponiblidade",weight="bold"),
+        status,inicio_l,fim_l,
+        
+        ft.CupertinoButton(text="Atualizar o status",bgcolor=ft.colors.GREEN_700)
+        ])
+        page.update()
+
+    motivo=ft.TextField(label="Motivos do Suspenso")
+    def show_input_s(e):
+        status_dlg.content=ft.Column(height=200,controls=[
+        ft.Text("Atualizar a Disponiblidade",weight="bold"),
+        status,motivo,
+        
+        ft.CupertinoButton(text="Atualizar o status",bgcolor=ft.colors.GREEN_700)
+        ])
+        page.update()
+    def show_input_d(e):
+        status_dlg.content=ft.Column(height=180,controls=[
+        ft.Text("Atualizar a Disponiblidade",weight="bold"),
+        status,
+        ft.CupertinoButton(text="Atualizar o status",bgcolor=ft.colors.GREEN_700)
+        ])
+        page.update()         
+    
+    status=ft.Dropdown(label="Status",options=[
+        ft.dropdown.Option(text="Activo",on_click=show_input_d),
+        ft.dropdown.Option(text="Transferido",on_click=show_input_t),
+        ft.dropdown.Option(text="Falecido",on_click=show_input_d),
+        ft.dropdown.Option(text="Aposentado",on_click=show_input_d),
+        ft.dropdown.Option(text="Licença/Dispensado",on_click=show_input_l),
+        ft.dropdown.Option(text="Suspenso",on_click=show_input_s)
+
+    ])
+    status_dlg=ft.AlertDialog(title=ft.Text(''),content=ft.Container(content=ft.Column(height=180,controls=[
+        ft.Text("Atualizar a Disponiblidade",weight="bold"),
+        status,
+        ft.CupertinoButton(text="Atualizar o status",bgcolor=ft.colors.GREEN_700)
+
+    ])),actions=[
+        
+    ])
+    def open_status(e):
+        global selected_id
+        selected_id = e.control.data
+        page.dialog = status_dlg
+        status_dlg.open = True
+        funcionario=GetEmployerByID(selected_id).json()
+        status_dlg.title=ft.Text(f"Estado do: {funcionario['nome']}")
+        page.update()
+        
+
     def open_show(e):
         global selected_id
-        selected_id = e.control.key
+        selected_id = e.control.data
         page.dialog = show_dlg
         show_dlg.open = True
-        page.update()
         funcionario=GetEmployerByID(selected_id).json()
         nascimento = re.split("-", funcionario['nascimento'])
         idade = datetime.now().year - int(nascimento[0])
         show_dlg.title=ft.Text(f"Dados do funcionario: {funcionario['nome']}")
-        show_dlg.content=ft.Column(controls=[
+        show_dlg.content=ft.Column(height=400,controls=[
             ft.Row(controls=[
                 ft.Text("Nome: ",weight="bold"),
                 ft.Text(f"{funcionario['nome']} {funcionario['apelido']}"),
@@ -286,7 +367,7 @@ def tabela(data, page, update_app):
 
     def open_delete(e):
         global selected_id
-        selected_id = e.control.key
+        selected_id = e.control.data
         page.dialog = delete_dlg
         delete_dlg.open = True
         page.update()
@@ -341,9 +422,13 @@ def tabela(data, page, update_app):
                     ft.DataCell(ft.Text(funcionario['reparticao'])),
                     ft.DataCell(ft.Text(funcionario['inicio_funcoes'])),
                     ft.DataCell(ft.Row(controls=[
-                        ft.IconButton(ft.icons.EDIT, icon_color=ft.colors.GREEN_700, on_click=open_update, key=f"{funcionario['id']}"),
-                        ft.IconButton(ft.icons.VISIBILITY, icon_color=ft.colors.BLUE_700, on_click=open_show, key=f"{funcionario['id']}"),
-                        ft.IconButton(ft.icons.DELETE, icon_color=ft.colors.RED_400, on_click=open_delete, key=f"{funcionario['id']}"),
+                        ft.PopupMenuButton(items=[
+                            ft.PopupMenuItem(text="Atualizar",on_click=open_update,data=f"{funcionario['id']}"),
+                            ft.PopupMenuItem(text="Ver Dados",on_click=open_show,data=f"{funcionario['id']}"),
+                            ft.PopupMenuItem(text="Salvar em PDF",on_click=open_show,data=f"{funcionario['id']}"),
+                            ft.PopupMenuItem(text="Disponiblidade",on_click=open_status,data=f"{funcionario['id']}"),
+                            ft.PopupMenuItem(text="Deletar",on_click=open_delete,data=f"{funcionario['id']}")
+                        ])
                     ])),
                 
                 ],

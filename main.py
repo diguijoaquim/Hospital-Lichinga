@@ -9,7 +9,12 @@ from pdf_printer import create_pdf
 
 token=''
 
-
+'''
+    especialidade,faixa etaria,categoria,nuit(intenger),
+    #novas atualizacoes
+#historico 
+#
+'''
         
 def salvar_pdf(e):
     dados=getFuncionarios()
@@ -59,11 +64,6 @@ def main(page: ft.Page):
     username_input = ft.TextField(label="Usuário ou telefone", autofocus=True)
     password_input = ft.TextField(label="Senha", password=True)
     result_text = ft.Text("")
-
-    psiquiatria_card=psiquiatria(getSectoresCount()['psiquiatria'])
-    medicina1_card=medicina(getSectoresCount()['medicina'])
-    laboratorio_card=laboratorio(getSectoresCount()['laboratorio'])
-    maternidade_card=maternidade(getSectoresCount()['maternidade'])
 
 
     def atualizar_app(page):
@@ -120,15 +120,13 @@ def main(page: ft.Page):
 
     login_dialog = ft.AlertDialog(
         title=ft.Text("Entrar no sistema"),
-        content=ft.Column(controls=[
+        content=ft.Column(height=200,controls=[
             username_input,
             password_input,
-            result_text
+            result_text,
+            ft.CupertinoButton(text="Entar no Sistema",bgcolor=ft.colors.GREEN_700,width=300,color="white",on_click=_login)
         ]),
-        actions=[
-            
-            ft.ElevatedButton(text="Entar no Sistema",bgcolor=ft.colors.GREEN_700,width=340,color="white",on_click=_login),
-        ],on_dismiss=_check,
+        on_dismiss=_check,
     )
     def find_filtered(e):
         if filtrar.value =="Provincia":
@@ -468,9 +466,17 @@ def main(page: ft.Page):
     #variaves do cadastro
     nome=ft.TextField(label="Nome do Funcionario" )
     apelido=ft.TextField(label="Apelido do Funcionario" )
-    nascimento_btn=ft.ElevatedButton(icon=ft.icons.CALENDAR_MONTH,text="nascimento",on_click=open_nascimento)
+    nascimento_btn=ft.ElevatedButton(
+        icon=ft.icons.CALENDAR_MONTH,
+        text="nascimento",
+        on_click=open_nascimento,
+        )
     funcoes_btn=ft.ElevatedButton(icon=ft.icons.CALENDAR_MONTH,text="Inicio das funcoes",on_click=open_funcoes)
-    
+    especialidade=ft.TextField(label="Especialidade" )
+    faixa_etaria=ft.TextField(label="Faixa Etaria" )
+    categoria=ft.TextField(label="Categoria" )
+    nuit=ft.TextField(label="Nuit" )
+
    
     
     bi=ft.TextField(label="Numero de BI" )
@@ -526,10 +532,10 @@ def main(page: ft.Page):
         content=ft.Column(controls=[
             ft.Row(controls=[
                 ft.Column(controls=[
-                nome,apelido,ft.Row(controls=[nascimento_btn,nascimento_demo]),bi,provincia,naturalidade,
+                nome,apelido,ft.Row(controls=[nascimento_btn,nascimento_demo]),bi,nuit,faixa_etaria,provincia,naturalidade,
             ]),
             ft.Column(controls=[
-                residencia,sexo,ft.Row(controls=[funcoes_btn,funcoes_demo]),careira,sector,reparticao
+                residencia,sexo,ft.Row(controls=[funcoes_btn,funcoes_demo]),especialidade,categoria,careira,sector,reparticao
             ]),
             ]), progressBar,demo_erro
            ,
@@ -577,9 +583,9 @@ def main(page: ft.Page):
 
     
     new_user_dlg=ft.AlertDialog(title=ft.Text("Novo Usuario"))
-    new_username=ft.TextField(label="Nome do Usuario",width=250)
-    new_contact=ft.TextField(label="Contacto",width=250)
-    new_pass=ft.TextField(label="senha",width=250)
+    new_username=ft.TextField(label="Nome do Usuario")
+    new_contact=ft.TextField(label="Contacto")
+    new_pass=ft.TextField(label="senha")
 
 
     alert_erro=ft.AlertDialog(title=ft.Text("Erro Ao Cadastrar"),content=ft.Row(controls=[
@@ -616,7 +622,7 @@ def main(page: ft.Page):
         new_user_dlg.open=True
         new_user_dlg.content=ft.Column(height=240,controls=[
             new_username,new_contact,new_pass,
-            ft.CupertinoButton("Cadastrar",bgcolor=ft.colors.GREEN_600,width=250,on_click=add_new_user)
+            ft.CupertinoButton("Cadastrar",bgcolor=ft.colors.GREEN_600,width=300,on_click=add_new_user)
         ])
         page.update()
 
@@ -628,13 +634,18 @@ def main(page: ft.Page):
             ft.PopupMenuItem("Novo usuario",on_click=new_user)
         ]
     )
-
+    def change_mode(e):
+        if page.theme_mode=='light':
+            page.theme_mode='dark'
+        else:
+            page.theme_mode='light'
+        page.update()
     page.appbar = ft.AppBar(
         bgcolor=ft.colors.GREEN_700,
         color=ft.colors.WHITE,
         leading=ft.Icon(ft.icons.LOCAL_HOSPITAL),
         title=ft.Text("Hospital de Lichinga"),
-        actions=[pm]
+        actions=[ft.IconButton(ft.icons.LIGHT_MODE,on_click=change_mode),pm]
     )
     rail = ft.NavigationRail(
         selected_index=0,
@@ -714,6 +725,7 @@ def profile_function(e):
 
 def help_function(e):
     print("Ação de ajuda")
+    
 
 
 # Executa o aplicativo
