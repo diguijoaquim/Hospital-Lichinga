@@ -37,7 +37,7 @@ def assistente(page):
             "text": p
         }
         resposta = requests.post(url="http://127.0.0.1:8000/dina", json=pergunta)
-        chatList.controls.append(ft.Text(f"Assistente: >>>{resposta.json()}", color="black", size=20, weight="bold", no_wrap=False)),
+        chatList.controls.append(ft.Text(f"Assistente: >>>{resposta.json()}", size=20, weight="bold", no_wrap=False,color=ft.colors.GREY_600)),
         page.update()
 
     def enviar(e):
@@ -46,20 +46,22 @@ def assistente(page):
         page.update()
         responder(input.value)
 
-    chatList = ft.ListView(height=500, width=800)
+    chatList = ft.ListView(height=500, width=400)
     input = ft.TextField(label="fale com assistente do hospital", on_submit=enviar)
     chat_input = ft.Row(
         controls=[
             input, ft.CupertinoButton("Enviar", on_click=enviar, bgcolor=ft.colors.GREEN_700)
         ]
     )
-    return ft.Column(
+    return ft.Row(
         controls=[
-            ft.Text("ASSISTENTE INTELIGENTE - POWERED BY LLAMA3"),
-            ft.Column(controls=[
-                chatList, chat_input
-            ])
-        ]
+            ft.Card(content=ft.Container(padding=30,content=ft.Column(controls=[
+                ft.Text("ASSISTENTE INTELIGENTE - POWERED BY LLAMA3",weight="bold"),
+                ft.Column(controls=[
+                    chatList, chat_input
+                ])
+            ])))
+        ],alignment=ft.MainAxisAlignment.CENTER
     )
 
 def tabela(data, page, update_app):
