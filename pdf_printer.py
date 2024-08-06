@@ -6,7 +6,7 @@ from reportlab.lib.units import inch
 from datetime import datetime
 from random import randint
 import os
-from controls import getFuncionarios, DeleteEmployerByID, UpdateEmployer, GetEmployerByID,getSectoresCount
+from controls import getFuncionarios, DeleteEmployerByID, UpdateEmployer, GetEmployerByID,getSectores
 
 filename=''
 def create_pdf(dados):

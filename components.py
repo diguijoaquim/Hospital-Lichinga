@@ -1,5 +1,5 @@
 import flet as ft
-from controls import getFuncionarios, DeleteEmployerByID, UpdateEmployer, GetEmployerByID,getSectoresCount
+from controls import getFuncionarios, DeleteEmployerByID, UpdateEmployer, GetEmployerByID,getSectores
 from datetime import datetime
 import re
 import requests
@@ -11,7 +11,67 @@ selected_id = 0
 def home(page):
     return ft.Column()
 
-
+def getChart():
+    normal_radius = 100
+    hover_radius = 110
+    normal_title_style = ft.TextStyle(
+        size=12, color=ft.colors.WHITE, weight=ft.FontWeight.BOLD
+    )
+    hover_title_style = ft.TextStyle(
+        size=16,
+        color=ft.colors.WHITE,
+        weight=ft.FontWeight.BOLD,
+        shadow=ft.BoxShadow(blur_radius=2, color=ft.colors.BLACK54),
+    )
+    normal_badge_size = 40
+    hover_badge_size = 50
+    def on_chart_event(e: ft.PieChartEvent):
+        for idx, section in enumerate(chart.sections):
+            if idx == e.section_index:
+                section.radius = hover_radius
+                section.title_style = hover_title_style
+            else:
+                section.radius = normal_radius
+                section.title_style = normal_title_style
+        chart.update()
+    chart = ft.PieChart(height=200,
+        sections=[
+            ft.PieChartSection(
+                40,
+                title="40%",
+                title_style=normal_title_style,
+                color=ft.colors.BLUE,
+                radius=normal_radius,
+            ),
+            ft.PieChartSection(
+                30,
+                title="30%",
+                title_style=normal_title_style,
+                color=ft.colors.YELLOW,
+                radius=normal_radius,
+                
+            ),
+            ft.PieChartSection(
+                15,
+                title="15%",
+                title_style=normal_title_style,
+                color=ft.colors.PURPLE,
+                radius=normal_radius,
+            ),
+            ft.PieChartSection(
+                15,
+                title="15%",
+                title_style=normal_title_style,
+                color=ft.colors.GREEN,
+                radius=normal_radius,
+            ),
+        ],
+        sections_space=0,
+        center_space_radius=0,
+        expand=True,
+        on_chart_event=on_chart_event
+    )
+    return chart
 
 def employer(page):
     return ft.Container()
@@ -36,7 +96,7 @@ def assistente(page):
         pergunta = {
             "text": p
         }
-        resposta = requests.post(url="http://127.0.0.1:8000/dina", json=pergunta)
+        resposta = requests.post(url="http://192.168.1.62:8000/dina", json=pergunta)
         chatList.controls.append(ft.Text(f"Assistente: >>>{resposta.json()}", size=20, weight="bold", no_wrap=False,color=ft.colors.GREY_600)),
         page.update()
 

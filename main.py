@@ -15,6 +15,7 @@ token=''
 #historico 
 #
 '''
+progess_page= ft.ProgressBar(color="amber", bgcolor="#eeeeee"),
         
 def salvar_pdf(e):
     dados=getFuncionarios()
@@ -89,10 +90,10 @@ def main(page: ft.Page):
         funcoes_demo.content=ft.Text('')
         
         if check_isLoged()==True:
-            psiquiatria_card=psiquiatria(getSectoresCount()['psiquiatria'])
-            medicina1_card=medicina(getSectoresCount()['medicina'])
-            laboratorio_card=laboratorio(getSectoresCount()['laboratorio'])
-            maternidade_card=maternidade(getSectoresCount()['maternidade'])
+            psiquiatria_card=psiquiatria(getSectores()['Psiquiatria'])
+            medicina1_card=medicina(getSectores()['Medicina 1'])
+            laboratorio_card=laboratorio(getSectores()['Laboratorio'])
+            maternidade_card=maternidade(getSectores()['Maternidade'])
             funcionarios=getFuncionarios()
             body.content=page_home
             update_employer(funcionarios)
@@ -181,12 +182,13 @@ def main(page: ft.Page):
         ),nascimento,funcoes])
         
     def update_home(data=getFuncionarios()):
-        psiquiatria_card=psiquiatria(getSectoresCount()['psiquiatria'])
-        medicina1_card=medicina(getSectoresCount()['medicina'])
-        laboratorio_card=laboratorio(getSectoresCount()['laboratorio'])
-        maternidade_card=maternidade(getSectoresCount()['maternidade'])
+        psiquiatria_card=psiquiatria(getSectores()['Psiquiatria'])
+        medicina1_card=medicina(getSectores()['Medicina 1'])
+        laboratorio_card=laboratorio(getSectores()['Laboratorio'])
+        maternidade_card=maternidade(getSectores()['Maternidade'])
         
         page_home.controls.clear()
+        print(medicina1_card.height)
         page_home.controls.append(ft.Column(controls=[
             ft.ResponsiveRow([
             ft.Container(col=3,content=laboratorio_card),
@@ -197,8 +199,28 @@ def main(page: ft.Page):
         ft.Container(expand=True,
                      content=ft.ResponsiveRow(controls=[
                         ft.Column(controls=[
-                           ft.ResponsiveRow(controls=[
-                                tabela(data,page,atualizar_app),
+                           ft.Row(controls=[
+                                ft.Card(content=tabela(data,page,atualizar_app),height=page.window_height-medicina1_card.height-10),
+                                ft.Card(expand=True,content=ft.Container(padding=12,content=ft.Column(controls=[
+                                    ft.Text("Grafico de Disponiblidade do funcionario",weight="bold"),
+                                    getChart(),
+                                    ft.Row(controls=[
+                                        ft.Container(width=24,height=24,bgcolor=ft.colors.GREEN_500)
+                                        ,ft.Text("funcionarios Activos")
+                                    ]),
+                                    ft.Row(controls=[
+                                        ft.Container(width=24,height=24,bgcolor=ft.colors.BLUE_500)
+                                        ,ft.Text("funcionarios de Ferias")
+                                    ]),
+                                    ft.Row(controls=[
+                                        ft.Container(width=24,height=24,bgcolor=ft.colors.PURPLE_500)
+                                        ,ft.Text("funcionarios Trasferidos")
+                                    ]),
+                                    ft.Row(controls=[
+                                        ft.Container(width=24,height=24,bgcolor=ft.colors.YELLOW_500)
+                                        ,ft.Text("funcionarios Suspencos")
+                                    ])
+                                ])),height=page.window_height-medicina1_card.height-10)
                            ])
                         ],scroll=ft.ScrollMode.AUTO,height=600)
                     ],)),nascimento,funcoes   
@@ -440,7 +462,11 @@ def main(page: ft.Page):
             "sexo": sexo.value,
             "inicio_funcoes": str(funcoes.value),
             "sector": sector.value,
-            "reparticao":reparticao.value
+            "reparticao":reparticao.value,
+            "especialidade": especialidade.value,
+            "categoria": categoria.value,
+            "nuit": nuit.value,
+            "faixa_etaria":faixa_etaria.value
         }
         demo_erro.content=ft.Text("")
         page.update()
@@ -472,9 +498,45 @@ def main(page: ft.Page):
         on_click=open_nascimento,
         )
     funcoes_btn=ft.ElevatedButton(icon=ft.icons.CALENDAR_MONTH,text="Inicio das funcoes",on_click=open_funcoes)
-    especialidade=ft.TextField(label="Especialidade" )
-    faixa_etaria=ft.TextField(label="Faixa Etaria" )
-    categoria=ft.TextField(label="Categoria" )
+    especialidade=ft.Dropdown(
+        label="Especialidade",
+        options=[
+        ft.dropdown.Option('Cirurgia Geral'),
+        ft.dropdown.Option('Oftalmologia'),
+        ft.dropdown.Option('Cardiologia'),
+        ft.dropdown.Option('Pediatria'),
+        ft.dropdown.Option('Ginecologia e Obstetrícia'),
+        ft.dropdown.Option('Ortopedia e Traumatologia'),
+        ft.dropdown.Option('Anestesiologia'),
+        ft.dropdown.Option('Radiologia'),
+        ft.dropdown.Option('Legista'),
+        ft.dropdown.Option('Otorrinolaringologia'),
+        ft.dropdown.Option('Medicina Interna'),
+        ft.dropdown.Option('Urologia')
+    ],
+    )
+    faixa_etaria=ft.Dropdown(
+        label="Faixa Etaria",
+        options=[
+            ft.dropdown.Option('11-18 anos: Adolescentes'),
+            ft.dropdown.Option('19-29 anos: Jovens adultos'),
+            ft.dropdown.Option('30-39 anos: Adultos'),
+            ft.dropdown.Option('40-49 anos: Meia-idade'),
+            ft.dropdown.Option('50-64 anos: Pré-idosos'),
+            ft.dropdown.Option('65+ anos: Idosos')
+        ]
+    )
+    categoria=ft.Dropdown(label="Categoria", options=[
+        ft.dropdown.Option("Agente de farmácia"),
+        ft.dropdown.Option("Agente de Medicina preventiva"),
+        ft.dropdown.Option("Agente de serviço"),
+        ft.dropdown.Option("Assistente Administrativo D"),
+        ft.dropdown.Option("Assistente técnico"),
+        ft.dropdown.Option("Auxiliar administrativo"),
+        ft.dropdown.Option("Auxiliar De Farmácia"),
+        ft.dropdown.Option("Carpinteiro"),
+        ft.dropdown.Option("Condutor de veículos de serviço")
+    ] )
     nuit=ft.TextField(label="Nuit" )
 
    
@@ -542,7 +604,7 @@ def main(page: ft.Page):
            
         ]),
         actions=[
-            ft.CupertinoButton("Cadsatrar o Funcionario",bgcolor=ft.colors.GREEN_700,width=600,on_click=add)
+            ft.CupertinoButton("Cadastrar o Funcionario",bgcolor=ft.colors.GREEN_700,width=600,on_click=add)
         ],
     
     )
@@ -692,7 +754,7 @@ def main(page: ft.Page):
     )
     body=ft.Container(content=page_home,expand=True)
     page.controls.clear()
-
+    
     page.update()
     page.add(
         ft.Row(
