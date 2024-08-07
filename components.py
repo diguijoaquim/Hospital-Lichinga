@@ -312,50 +312,198 @@ def tabela(data, page, update_app):
         status_dlg.content=ft.Column(height=200,controls=[
         ft.Text("Atualizar a Disponiblidade",weight="bold"),
         status,input_to,
-        
-        ft.CupertinoButton(text="Atualizar o status",bgcolor=ft.colors.GREEN_700)
+        progressBar_status,
+        ft.CupertinoButton(text="Atualizar o status",bgcolor=ft.colors.GREEN_700,on_click=addTransferencia)
         ])
         page.update()
     inicio_l=ft.TextField(label="Inicio das ferias ex:28/11/2024")
     fim_l=ft.TextField(label="Fim das ferias ex:28/11/2024")
+    progressBar_status=ft.ProgressBar(color="amber", bgcolor="#eeeeee",visible=False)
+    
+    erro_status_dlg=ft.AlertDialog(title=ft.Text("Ocorreu um erro"), content=ft.Row(controls=[
+        ft.Icon(ft.icons.INFO,color=ft.colors.RED_500),
+        ft.Text("nao foi possivel atualizar o STATUS")
+    ]))
+
+    sucess_status_dlg=ft.AlertDialog(title=ft.Text("FEITO"), content=ft.Row(controls=[
+        ft.Icon(ft.icons.INFO,color=ft.colors.GREEN_500),
+        ft.Text("O STATUS foi atualizado\n com sucesso")
+    ]))
+
+
+    def addFerias(e):
+        progressBar_status.visible=True
+        page.update()
+        dados={
+            "funcionario_id": selected_id,
+            "data_inicio_ferias": inicio_l.value,
+            "data_fim_ferias": fim_l.value
+            }
+        url="http://192.168.1.62:8000/add_ferias"
+        res=requests.post(url=url,json=dados)
+        if res.status_code==200:
+            status_dlg.open=False
+            progressBar_status.visible=False
+            page.dialog=sucess_status_dlg
+            sucess_status_dlg.open=True
+            page.update()
+        else:
+            status_dlg.open=False
+            progressBar_status.visible=False
+            page.dialog=erro_status_dlg
+            erro_status_dlg.open=True
+            page.update()
+
+    def addFalecido(e):
+        progressBar_status.visible=True
+        page.update()
+        dados={
+            "funcionario_id": selected_id,
+            "data_falecimento": "2024-08-07T13:14:43.172Z",
+            "idade": 0
+            }
+        url="http://192.168.1.62:8000/add_falecido"
+        res=requests.post(url=url,json=dados)
+        if res.status_code==200:
+            status_dlg.open=False
+            progressBar_status.visible=False
+            page.dialog=sucess_status_dlg
+            sucess_status_dlg.open=True
+            page.update()
+        else:
+            status_dlg.open=False
+            progressBar_status.visible=False
+            page.dialog=erro_status_dlg
+            erro_status_dlg.open=True
+            page.update()
+
+    def addAposentado(e):
+        progressBar_status.visible=True
+        page.update()
+        dados={
+            "funcionario_id": selected_id,
+            "data_reforma": "2024-08-07T13:19:47.729Z",
+            "idade_reforma": 0
+            }
+        url="http://192.168.1.62:8000/add_reforma"
+        res=requests.post(url=url,json=dados)
+        if res.status_code==200:
+            status_dlg.open=False
+            progressBar_status.visible=False
+            page.dialog=sucess_status_dlg
+            sucess_status_dlg.open=True
+            page.update()
+        else:
+            status_dlg.open=False
+            progressBar_status.visible=False
+            page.dialog=erro_status_dlg
+            erro_status_dlg.open=True
+            page.update()
+    def addTransferencia(e):
+        progressBar_status.visible=True
+        page.update()
+        dados={
+            "funcionario_id": selected_id,
+            "data_transferido": "2024-08-07T13:06:28.092Z",
+            "lugar_transferido": input_to.value
+            }
+        url="http://192.168.1.62:8000/add_transferencia"
+        res=requests.post(url=url,json=dados)
+        if res.status_code==200:
+            status_dlg.open=False
+            progressBar_status.visible=False
+            page.dialog=sucess_status_dlg
+            sucess_status_dlg.open=True
+            page.update()
+        else:
+            status_dlg.open=False
+            progressBar_status.visible=False
+            page.dialog=erro_status_dlg
+            erro_status_dlg.open=True
+            page.update()
+    def addSuspenco(e):
+        progressBar_status.visible=True
+        page.update()
+        dados={
+            "funcionario_id":selected_id,
+            "data_suspenso": "2024-08-07T13:29:23.725Z",
+            "motivo": motivo.value
+            }
+        url="http://192.168.1.62:8000/add_suspenso"
+        res=requests.post(url=url,json=dados)
+        if res.status_code==200:
+            status_dlg.open=False
+            progressBar_status.visible=False
+            page.dialog=sucess_status_dlg
+            sucess_status_dlg.open=True
+            page.update()
+        else:
+            status_dlg.open=False
+            progressBar_status.visible=False
+            page.dialog=erro_status_dlg
+            erro_status_dlg.open=True
+            page.update()
+
+
+
+        #licenca
     def show_input_l(e):
         status_dlg.content=ft.Column(height=260,controls=[
         ft.Text("Atualizar a Disponiblidade",weight="bold"),
         status,inicio_l,fim_l,
-        
-        ft.CupertinoButton(text="Atualizar o status",bgcolor=ft.colors.GREEN_700)
+        progressBar_status,
+        ft.CupertinoButton(text="Atualizar o status",bgcolor=ft.colors.GREEN_700,on_click=addFerias)
         ])
         page.update()
+        
 
     motivo=ft.TextField(label="Motivos do Suspenso")
+
+        #suspenso
     def show_input_s(e):
         status_dlg.content=ft.Column(height=200,controls=[
         ft.Text("Atualizar a Disponiblidade",weight="bold"),
         status,motivo,
-        
-        ft.CupertinoButton(text="Atualizar o status",bgcolor=ft.colors.GREEN_700)
+        progressBar_status,
+        ft.CupertinoButton(text="Atualizar o status",bgcolor=ft.colors.GREEN_700,on_click=addSuspenco)
         ])
         page.update()
+
+        #falecido
     def show_input_d(e):
         status_dlg.content=ft.Column(height=180,controls=[
         ft.Text("Atualizar a Disponiblidade",weight="bold"),
         status,
-        ft.CupertinoButton(text="Atualizar o status",bgcolor=ft.colors.GREEN_700)
+        progressBar_status,
+        ft.CupertinoButton(text="Atualizar o status",bgcolor=ft.colors.GREEN_700,on_click=addFalecido)
         ])
-        page.update()         
+        page.update()  
+
+        #reforma     
+    def show_input_a(e):
+        status_dlg.content=ft.Column(height=180,controls=[
+        ft.Text("Atualizar a Disponiblidade",weight="bold"),
+        status,
+        progressBar_status,
+        ft.CupertinoButton(text="Atualizar o status",bgcolor=ft.colors.GREEN_700,on_click=addAposentado)
+        ])
+        page.update()  
+    
+
+
     
     status=ft.Dropdown(label="Status",options=[
         ft.dropdown.Option(text="Activo",on_click=show_input_d),
         ft.dropdown.Option(text="Transferido",on_click=show_input_t),
         ft.dropdown.Option(text="Falecido",on_click=show_input_d),
-        ft.dropdown.Option(text="Aposentado",on_click=show_input_d),
+        ft.dropdown.Option(text="Aposentado",on_click=show_input_a),
         ft.dropdown.Option(text="Licença/Dispensado",on_click=show_input_l),
         ft.dropdown.Option(text="Suspenso",on_click=show_input_s)
 
     ])
     status_dlg=ft.AlertDialog(title=ft.Text(''),content=ft.Container(content=ft.Column(height=180,controls=[
         ft.Text("Atualizar a Disponiblidade",weight="bold"),
-        status,
+        status,progressBar_status,
         ft.CupertinoButton(text="Atualizar o status",bgcolor=ft.colors.GREEN_700)
 
     ])),actions=[

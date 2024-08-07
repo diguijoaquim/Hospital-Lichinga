@@ -199,28 +199,9 @@ def main(page: ft.Page):
         ft.Container(expand=True,
                      content=ft.ResponsiveRow(controls=[
                         ft.Column(controls=[
-                           ft.Row(controls=[
+                           ft.ResponsiveRow(controls=[
                                 ft.Card(content=tabela(data,page,atualizar_app),height=page.window_height-medicina1_card.height-10),
-                                ft.Card(expand=True,content=ft.Container(padding=12,content=ft.Column(controls=[
-                                    ft.Text("Grafico de Disponiblidade do funcionario",weight="bold"),
-                                    getChart(),
-                                    ft.Row(controls=[
-                                        ft.Container(width=24,height=24,bgcolor=ft.colors.GREEN_500)
-                                        ,ft.Text("funcionarios Activos")
-                                    ]),
-                                    ft.Row(controls=[
-                                        ft.Container(width=24,height=24,bgcolor=ft.colors.BLUE_500)
-                                        ,ft.Text("funcionarios de Ferias")
-                                    ]),
-                                    ft.Row(controls=[
-                                        ft.Container(width=24,height=24,bgcolor=ft.colors.PURPLE_500)
-                                        ,ft.Text("funcionarios Trasferidos")
-                                    ]),
-                                    ft.Row(controls=[
-                                        ft.Container(width=24,height=24,bgcolor=ft.colors.YELLOW_500)
-                                        ,ft.Text("funcionarios Suspencos")
-                                    ])
-                                ])),height=page.window_height-medicina1_card.height-10)
+ 
                            ])
                         ],scroll=ft.ScrollMode.AUTO,height=600)
                     ],)),nascimento,funcoes   
@@ -466,6 +447,7 @@ def main(page: ft.Page):
             "especialidade": especialidade.value,
             "categoria": categoria.value,
             "nuit": nuit.value,
+            "careira":careira.value,
             "faixa_etaria":faixa_etaria.value
         }
         demo_erro.content=ft.Text("")
