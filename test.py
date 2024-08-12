@@ -1,4 +1,3 @@
-from controls import getSectores,GetEmployerByID
+from controls import*
 
-
-print(GetEmployerByID(4))
+licenca_to_active()

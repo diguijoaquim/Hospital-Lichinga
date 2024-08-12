@@ -1,6 +1,7 @@
 import requests
 from save_token import *
 import json
+from datetime import datetime
 #aqui sao controlers do app main.py
 token=get_token()
 
@@ -36,28 +37,141 @@ def getFuncionarios():
     url = 'http://192.168.1.62:8000/employers/'
     try:
         response = requests.get(url, headers=headers)
-        response.raise_for_status()  # Levanta uma exceção para status codes 4xx/5xx
+        response.raise_for_status()  
         data = response.json()
-        if data:  # Verifica se a resposta não está vazia
+        if data:   
             return data
     except requests.ConnectionError:
         print("Erro de conexão. Verifique a sua rede.")
     except requests.Timeout:
         print("A solicitação expirou. Tente novamente mais tarde.")
-    except requests.RequestException as e:  # Captura outras exceções relacionadas a requests
+    except requests.RequestException as e:   
         print(f"Ocorreu um erro: {e}")
-    
     return []
+
+def getReformados():
+    url = 'http://192.168.1.62:8000/emp/reformados/'
+    try:
+        response = requests.get(url, headers=headers)
+        response.raise_for_status()  
+        data = response.json()
+        if data:   
+            return data
+    except requests.ConnectionError:
+        print("Erro de conexão. Verifique a sua rede.")
+    except requests.Timeout:
+        print("A solicitação expirou. Tente novamente mais tarde.")
+    except requests.RequestException as e:   
+        print(f"Ocorreu um erro: {e}")
+    return []
+        
+
+def getDeletedEmployers():
+    url = 'http://192.168.1.62:8000/removido/'
+    try:
+        response = requests.get(url, headers=headers)
+        response.raise_for_status()  
+        data = response.json()
+        if data:   
+            return data
+    except requests.ConnectionError:
+        print("Erro de conexão. Verifique a sua rede.")
+    except requests.Timeout:
+        print("A solicitação expirou. Tente novamente mais tarde.")
+    except requests.RequestException as e:   
+        print(f"Ocorreu um erro: {e}")
+    return []
+
+def getDeathEmployers():
+    url = 'http://192.168.1.62:8000/emp/falecidos/'
+    try:
+        response = requests.get(url, headers=headers)
+        response.raise_for_status()  
+        data = response.json()
+        if data:   
+            return data
+    except requests.ConnectionError:
+        print("Erro de conexão. Verifique a sua rede.")
+    except requests.Timeout:
+        print("A solicitação expirou. Tente novamente mais tarde.")
+    except requests.RequestException as e:   
+        print(f"Ocorreu um erro: {e}")
+    return []
+
+def getReformado():
+    url = 'http://192.168.1.62:8000/emp/reformados'
+    try:
+        response = requests.get(url, headers=headers)
+        response.raise_for_status()  
+        data = response.json()
+        if data:   
+            return data
+    except requests.ConnectionError:
+        print("Erro de conexão. Verifique a sua rede.")
+    except requests.Timeout:
+        print("A solicitação expirou. Tente novamente mais tarde.")
+    except requests.RequestException as e:   
+        print(f"Ocorreu um erro: {e}")
+    return []
+
+def getTrasferidoEmployers():
+    url = 'http://192.168.1.62:8000/emp/transferidos/'
+    try:
+        response = requests.get(url, headers=headers)
+        response.raise_for_status()  
+        data = response.json()
+        if data:   
+            return data
+    except requests.ConnectionError:
+        print("Erro de conexão. Verifique a sua rede.")
+    except requests.Timeout:
+        print("A solicitação expirou. Tente novamente mais tarde.")
+    except requests.RequestException as e:   
+        print(f"Ocorreu um erro: {e}")
+    return []
+
+def getSuspensedEmployers():
+    url = 'http://192.168.1.62:8000/emp/suspensos'
+    try:
+        response = requests.get(url, headers=headers)
+        response.raise_for_status()  
+        data = response.json()
+        if data:   
+            return data
+    except requests.ConnectionError:
+        print("Erro de conexão. Verifique a sua rede.")
+    except requests.Timeout:
+        print("A solicitação expirou. Tente novamente mais tarde.")
+    except requests.RequestException as e:   
+        print(f"Ocorreu um erro: {e}")
+    return []
+
+def getEmployerLicenca():
+    url = 'http://192.168.1.62:8000/emp/reformados'
+    try:
+        response = requests.get(url, headers=headers)
+        response.raise_for_status()  
+        data = response.json()
+        if data:   
+            return data
+    except requests.ConnectionError:
+        print("Erro de conexão. Verifique a sua rede.")
+    except requests.Timeout:
+        print("A solicitação expirou. Tente novamente mais tarde.")
+    except requests.RequestException as e:   
+        print(f"Ocorreu um erro: {e}")
+    return []
+
 def GetEmployerByID(id):
     url = f'http://192.168.1.62:8000/employer/{id}'
     return requests.get(url, headers=headers)
     
 def getFuncionariosByQuery(query):
-    url = f'http://192.168.1.62:8000/employers/?search={query}'
+    url = f'http://192.168.1.62:8000/getbysearch/?name={query}'
     response = requests.get(url, headers=headers)
     if response.status_code == 200:
         data = response.json()
-        if data:  # Verifica se a resposta não está vazia
+        if data:   
             return data
     return []
 
@@ -71,7 +185,7 @@ def UpdateEmployer(data,id):
     response = requests.put(url, headers=headers,json=data)
     if response.status_code == 200:
         data = response.json()
-        if data:  # Verifica se a resposta não está vazia
+        if data:   
             return response.status_code
     return response.status_code
 
@@ -80,7 +194,7 @@ def getEmployerByGenre(genre):
     response = requests.get(url, headers=headers)
     if response.status_code == 200:
         data = response.json()
-        if data:  # Verifica se a resposta não está vazia
+        if data:   
             return data
     return []
 
@@ -89,7 +203,7 @@ def getEmployerByProvince(p):
     response = requests.get(url, headers=headers)
     if response.status_code == 200:
         data = response.json()
-        if data:  # Verifica se a resposta não está vazia
+        if data:   
             return data
     return []
 
@@ -99,7 +213,7 @@ def getEmployerByReparticao(r):
         response = requests.get(url, headers=headers)
         if response.status_code == 200:
             data = response.json()
-            if data:  # Verifica se a resposta não está vazia
+            if data:   
                 return data
     except:
         return []
@@ -109,7 +223,7 @@ def getEmployerBySector(s):
         response = requests.get(url, headers=headers)
         if response.status_code == 200:
             data = response.json()
-            if data:  # Verifica se a resposta não está vazia
+            if data:   
                 return data
     except:
         return []
@@ -117,8 +231,8 @@ def DeleteEmployerByID(id):
     url = f'http://192.168.1.62:8000/employers/{id}'
     response = requests.delete(url, headers=headers)
     if response.status_code == 200:
-        data = response.json()
-        if data:  # Verifica se a resposta não está vazia
+        data = response.status_code
+        if data:   
             return data
     return []
 def check_token(t):
@@ -138,7 +252,7 @@ def check_token(t):
             response = requests.get(url, headers=header)
             if response.status_code == 200:
                 data = response.json()
-                if data:  # Verifica se a resposta não está vazia
+                if data:   
                     return data
                 
 def getSectores():
@@ -156,3 +270,61 @@ def NovoUsuario(data):
 
     return res.status_code 
             
+
+
+def getFerias():
+    url='http://192.168.1.62:8000/ferias'
+    res=requests.get(url)
+    if res.status_code==200:
+        return res.json()
+    else:
+        []
+
+
+
+# Função para calcular quantos dias faltam até o fim das férias
+def getRestante(data_inicio, data_fim):
+    # Converter strings para objetos datetime
+    inicio = datetime.fromisoformat(data_inicio)
+    fim = datetime.fromisoformat(data_fim)
+    # Pegar a data atual
+    agora = datetime.now()
+    
+    # Se as férias ainda não começaram, retornar a diferença entre o início e agora
+    if agora < inicio:
+        return (inicio - agora).days
+    # Se as férias começaram mas não terminaram, retornar a diferença entre o fim e agora
+    elif inicio <= agora <= fim:
+        return (fim - agora).days
+    # Se as férias já terminaram, retornar 0
+    else:
+        return 0
+    
+# Função para calcular a duração total das férias
+def getDays(data_inicio, data_fim):
+    # Converter strings para objetos datetime
+    inicio = datetime.fromisoformat(data_inicio)
+    fim = datetime.fromisoformat(data_fim)
+    # Calcular a diferença em dias
+    diferenca = fim - inicio
+    return diferenca.days
+
+def getCustomFerias():
+    ferias =getFerias()
+    customFerias=[]
+    for feria in ferias:
+        customFerias.append({"funcionario":feria['nome'],
+            'dias_restantes':getRestante(data_inicio=feria['data_inicio_ferias'],
+                                        data_fim=feria['data_fim_ferias']),
+                                        'dias':getDays(feria['data_inicio_ferias'],
+                                                        data_fim=feria['data_fim_ferias']),
+                                        'inicio':feria['data_inicio_ferias'],
+                                        'fim':feria['data_fim_ferias']})
+    return customFerias
+
+def licenca_to_active(id):
+    dados = {
+        "status": 'ACTIVO',
+    }
+    res = UpdateEmployer(data=dados, id=id)
+    return res

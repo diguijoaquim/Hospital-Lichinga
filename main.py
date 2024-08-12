@@ -6,16 +6,19 @@ from components import*
 import sys
 import os
 from pdf_printer import create_pdf
+import asyncio
 
 token=''
 
-'''
-    especialidade,faixa etaria,categoria,nuit(intenger),
-    #novas atualizacoes
-#historico 
-#
-'''
-progess_page= ft.ProgressBar(color="amber", bgcolor="#eeeeee"),
+employers=[]
+deletedEmployers=[]
+deathEmployers=[]
+licenseEmployers=[]
+suspensoEmployers=[]
+trasferidos=[]
+
+
+progess_page= ft.AlertDialog(open=True,content=ft.Row(height=30,width=100,controls=[ft.ProgressRing(),ft.Text("Caregando...",weight="bold")]))
         
 def salvar_pdf(e):
     dados=getFuncionarios()
@@ -30,7 +33,7 @@ def main(page: ft.Page):
     page.theme_mode = ft.ThemeMode.LIGHT
     page.horizontal_alignment = ft.CrossAxisAlignment.CENTER
     page.vertical_alignment = ft.MainAxisAlignment.CENTER
-    
+    global employers,setores,suspensoEmployers,licenseEmployers
     demo_erro=ft.Container()
     page.padding = 0
     page.add(
@@ -61,6 +64,8 @@ def main(page: ft.Page):
         )
     )
     page.update()
+    employers=getFuncionarios()
+    setores=getSectores()
     # Criação dos campos de entrada e botões
     username_input = ft.TextField(label="Usuário ou telefone", autofocus=True)
     password_input = ft.TextField(label="Senha", password=True)
@@ -90,10 +95,10 @@ def main(page: ft.Page):
         funcoes_demo.content=ft.Text('')
         
         if check_isLoged()==True:
-            psiquiatria_card=psiquiatria(getSectores()['Psiquiatria'])
-            medicina1_card=medicina(getSectores()['Medicina 1'])
-            laboratorio_card=laboratorio(getSectores()['Laboratorio'])
-            maternidade_card=maternidade(getSectores()['Maternidade'])
+            psiquiatria_card=psiquiatria(setores['Psiquiatria'])
+            medicina1_card=medicina(setores['Medicina 1'])
+            laboratorio_card=laboratorio(setores['Laboratorio'])
+            maternidade_card=maternidade(setores['Maternidade'])
             funcionarios=getFuncionarios()
             body.content=page_home
             update_employer(funcionarios)
@@ -133,16 +138,34 @@ def main(page: ft.Page):
         if filtrar.value =="Provincia":
             update_employer(getEmployerByProvince(provincia_s.value))
             page.update()
-        if filtrar.value =="Naturalidade":
+        elif filtrar.value =="Naturalidade":
             pass
-        if filtrar.value =="Sector":
+        elif filtrar.value =="Sector":
             update_employer(getEmployerBySector(sector_s.value))
             page.update()
-        if filtrar.value =="Genero":
+        elif filtrar.value =="Genero":
             update_employer(getEmployerByGenre(sexo_filter.value))
             page.update()
-        if filtrar.value =="Reparticao":
+        elif filtrar.value =="Reparticao":
             update_employer(getEmployerByReparticao(reparticao_s.value))
+            page.update()
+        elif filtrar.value =="Estado":
+            if estado.value=="DELETADO":
+                update_employer(getDeletedEmployers())
+                print(deletedEmployers)
+            elif estado.value=="ACTIVO":
+                update_employer(getFuncionarios())
+            elif estado.value=="APOSENTADO":
+                update_employer(getReformados())
+            elif estado.value=="FALECIDO":
+                update_employer(getDeathEmployers())
+            elif estado.value=="SUSPENSO":
+                update_employer(getSuspensedEmployers())
+            elif estado.value=="TRANSFERIDO":
+                update_employer(getTrasferidoEmployers())
+            elif estado.value=="LICENCA/FERIAS":
+                update_employer(getEmployerLicenca())
+
             page.update()
     provincia_s = ft.Dropdown(
             label="Província",
@@ -163,7 +186,7 @@ def main(page: ft.Page):
     def update_employer(data):
         page_employers.content=ft.Column(controls=[
         ft.Row(controls=[
-            filtrar,provincia_s,sector_s,reparticao_s,sexo_filter,ft.FloatingActionButton(icon=ft.icons.FIND_IN_PAGE,on_click=find_filtered),
+            filtrar,provincia_s,sector_s,reparticao_s,estado,sexo_filter,ft.FloatingActionButton(icon=ft.icons.FIND_IN_PAGE,on_click=find_filtered),
             search_input,ft.Container(content=ft.Row(controls=[
                 ft.IconButton(icon=ft.icons.PRINT),
                 ft.IconButton(icon=ft.icons.DOWNLOAD,on_click=salvar_pdf),
@@ -180,15 +203,48 @@ def main(page: ft.Page):
                     ],)
         
         ),nascimento,funcoes])
+
+
+    #criar uma funcao assicrona que veriica mudanca no banco de daos para atualizar a tela de uma forma dinamina sem travar a tela
+    
+    async def atualizar_home():
+        global employers,setores,deletedEmployers,deathEmployers,suspensoEmployers,licenseEmployers,trasferidos
+    
+        if employers:
+            #default
+            body.content=page_home
+            page.update()
+
+            novosdados = await asyncio.to_thread(getFuncionarios)
+            setores=await asyncio.to_thread(getSectores)
+            deletedEmployers= await asyncio.to_thread(getDeletedEmployers())
+            suspensoEmployers=await asyncio.to_thread(getSuspensedEmployers())
+            licenseEmployers=await asyncio.to_thread(getEmployerLicenca())
+            deathEmployers=await asyncio.to_thread(getDeathEmployers())
+            trasferidos=await asyncio.to_thread(getTrasferidoEmployers())
+
+            if novosdados != employers:
+                update_home(novosdados)
+                body.content=page_home
+                page.update()
+                page.update()
+                employers = novosdados  # Atualiza a variável global com os novos dados
+            else:
+                print("Nenhuma mudança nos dados.")
+                
+        else:
+            body.content = page_employers
+            page.update()
+    
+
+
         
-    def update_home(data=getFuncionarios()):
-        psiquiatria_card=psiquiatria(getSectores()['Psiquiatria'])
-        medicina1_card=medicina(getSectores()['Medicina 1'])
-        laboratorio_card=laboratorio(getSectores()['Laboratorio'])
-        maternidade_card=maternidade(getSectores()['Maternidade'])
-        
+    def update_home(data=employers):
+        psiquiatria_card=psiquiatria(setores['Psiquiatria'])
+        medicina1_card=medicina(setores['Medicina 1'])
+        laboratorio_card=laboratorio(setores['Laboratorio'])
+        maternidade_card=maternidade(setores['Maternidade'])
         page_home.controls.clear()
-        print(medicina1_card.height)
         page_home.controls.append(ft.Column(controls=[
             ft.ResponsiveRow([
             ft.Container(col=3,content=laboratorio_card),
@@ -232,8 +288,8 @@ def main(page: ft.Page):
         page.update()
     nascimento_demo=ft.Container()
     nascimento=ft.DatePicker(
-                    first_date=datetime(year=1950, month=1, day=1),
-                    last_date=datetime(year=2010, month=1, day=1),
+                    first_date=datetime(year=2000, month=1, day=1),
+                    last_date=datetime(year=datetime.now().year, month=datetime.now().month, day=datetime.now().day),
                     open=False,
                     on_change=done
 
@@ -274,7 +330,7 @@ def main(page: ft.Page):
     )
     sector_s = ft.Dropdown(
     label="Sector",
-    width=220,
+    width=160,
     options=[
         ft.dropdown.Option("Laboratório"),
         ft.dropdown.Option("Maternidade"),
@@ -298,7 +354,7 @@ def main(page: ft.Page):
 
     reparticao_s = ft.Dropdown(
     label="Repartição",
-    width=220,
+    width=160,
     options=[
         ft.dropdown.Option("Assistência Jurídica"),
         ft.dropdown.Option("Assistência Social"),
@@ -355,25 +411,41 @@ def main(page: ft.Page):
         ft.dropdown.Option("Planejamento e Estatísticas")
     ]
 )
+    estado = ft.Dropdown(
+    label="Estado",
+    width=160,
+    options=[
+        ft.dropdown.Option("ACTIVO"),
+        ft.dropdown.Option("LICENCA/FERIAS"),
+        ft.dropdown.Option("APOSENTADO"),
+        ft.dropdown.Option("SUSPENSO"),
+        ft.dropdown.Option("DELETADO"),
+        ft.dropdown.Option("TRANSFERIDO"),
+        ft.dropdown.Option("FALECIDO"),
+        ]
+    )
 
     def find_searching(e):
-        update_employer(getFuncionariosByQuery(e.control.value))
+        datas=update_employer(getFuncionariosByQuery(e.control.value))
+        print(datas)
         page.update()
 
     #telas
     page_home=home(page)
     page_employers=employer(page)
     page_assistente=assistente(page)
+    page_licenca=ft.Container(content=ft.Row(height=100,width=100,controls=[ft.ProgressRing(bgcolor=ft.colors.ORANGE_500,height=50,width=50)],alignment=ft.MainAxisAlignment.CENTER))
 
     search_input=ft.TextField(label="Pesquisar",on_submit=find_searching,width=170)
     filtrar=ft.Dropdown(
         label="filtrar por",
-        width=150,
+        width=160,
         options=[
             
             ft.dropdown.Option("Provincia"),
             ft.dropdown.Option("Sector"),
             ft.dropdown.Option("Genero"),
+            ft.dropdown.Option("Estado"),
             ft.dropdown.Option("Naturalidade"),
             ft.dropdown.Option("Reparticao"),
 
@@ -390,30 +462,89 @@ def main(page: ft.Page):
         page.update()
         page.update()
 
-    def change_page(e):
+    async def atualizar_employers():
+        global employers
+    
+        if employers:
+            body.content = page_employers
+            page.update()
+            novosdados = await asyncio.to_thread(getFuncionarios)
+            
+            if novosdados != employers:
+                update_employer(novosdados)
+                page.update()
+                employers = novosdados  # Atualiza a variável global com os novos dados
+            else:
+                print("Nenhuma mudança nos dados.")
+                
+        else:
+            body.content = page_employers
+            page.update()
+
+    async def employersLicenca():
+        tabela=ft.DataTable(
+            columns=[
+                ft.DataColumn(ft.Text("Funcionario")),
+                ft.DataColumn(ft.Text("Dias a Descancar")),
+                ft.DataColumn(ft.Text("Dias Restantes")),
+                ft.DataColumn(ft.Text("Data do inicio das ferias")),
+                ft.DataColumn(ft.Text("Termina no dia")),
+                ft.DataColumn(ft.Text("Estado"))
+            ],
+            border_radius=10,
+            border=ft.border.all(1, ft.colors.GREY_300),)
+        ferias = []
+        if ferias:
+            body.content = page_licenca
+            page.update()
+        else:
+            body.content = page_licenca
+            page.update()
+            novos_dados = await asyncio.to_thread(getCustomFerias)
+            for feria in novos_dados:
+                
+                if int(feria['dias_restantes']>0): 
+                    sinal=ft.Container(width=100,height=25,bgcolor=ft.colors.GREEN_500,border_radius=5,content=ft.Row(
+                        controls=[ft.Text("ativo",color="white",weight='bold')],alignment=ft.MainAxisAlignment.CENTER))
+                else:
+                    sinal=ft.Container(width=100,height=25,bgcolor=ft.colors.ORANGE_500,border_radius=5,
+                                       content=ft.Row(controls=[ft.Text("passado",color="white",weight='bold')]
+                                                      ,alignment=ft.MainAxisAlignment.CENTER))
+                tabela.rows.append(
+                    ft.DataRow(
+                    cells=[
+                        ft.DataCell(ft.Text(feria['funcionario'],weight='bold')),
+                        ft.DataCell(ft.Text(feria['dias'])),
+                        ft.DataCell(ft.Text(feria['dias_restantes'],weight='bold')),
+                        ft.DataCell(ft.Text(feria['inicio'])),
+                        ft.DataCell(ft.Text(feria['fim'])),
+                        ft.DataCell(sinal),
+                        
+                    ],
+                ),
+                )
+            page_licenca.content=tabela
+            page.update()
+            
+
+    def  change_page(e):
         index=e.control.selected_index
         if index==0:
-            body.content=page_home
-            page.update()
+            asyncio.run(atualizar_home())
         elif index==1:
-            if getFuncionarios():
-                body.content=page_employers
-                page.update()
-            else:
-                body.content=page_employers
-                page.update()
-                
-           
+            asyncio.run(atualizar_employers())
         elif index==2:
+            asyncio.run(employersLicenca())
+        elif index==3:
             body.content=page_assistente
             page.update()
-        elif index==3:
-            atualizar_app(page)
-            pass
         elif index==4:
             atualizar_app(page)
             pass
-        elif index==6:
+        elif index==5:
+            atualizar_app(page)
+            pass
+        elif index==7:
             remove_token()
             atualizar_app(page)
         else:
@@ -541,7 +672,7 @@ def main(page: ft.Page):
         )
     provincia_s = ft.Dropdown(
             label="Província",
-            width=200,
+            width=140,
             options=[
                 ft.dropdown.Option("Maputo"),
                 ft.dropdown.Option("Gaza"),
@@ -707,6 +838,11 @@ def main(page: ft.Page):
                 selected_icon_content=ft.Icon(ft.icons.PEOPLE),
                 label="Funcionarios",
             ),
+            ft.NavigationRailDestination(
+                icon_content=ft.Icon(ft.icons.PEOPLE),
+                selected_icon_content=ft.Icon(ft.icons.PEOPLE),
+                label="Licenca/Reriado",
+            ),
             
             ft.NavigationRailDestination(
                 icon=ft.icons.CHAT,
@@ -738,6 +874,7 @@ def main(page: ft.Page):
     page.controls.clear()
     
     page.update()
+    
     page.add(
         ft.Row(
             [
@@ -754,21 +891,7 @@ def main(page: ft.Page):
     
     atualizar_app(page)
 
-# Funções de exemplo para cada ação
-def search_function(e):
-    print("Ação de pesquisa")
 
-def settings_function(e):
-    print("Ação de configurações")
-
-def notifications_function(e):
-    print("Ação de notificações")
-
-def profile_function(e):
-    print("Ação de perfil de usuário")
-
-def help_function(e):
-    print("Ação de ajuda")
     
 
 

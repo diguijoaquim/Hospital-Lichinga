@@ -125,7 +125,6 @@ def assistente(page):
     )
 
 def tabela(data, page, update_app):
-    demo_erro = ft.Container()
     progressBar_update = ft.ProgressBar(width=600, color="amber", bgcolor=ft.colors.GREEN_700, visible=False)
     
     def ok(e):
@@ -177,6 +176,8 @@ def tabela(data, page, update_app):
         page.update()
         sleep(3)
         res = UpdateEmployer(data=dados, id=selected_id)
+
+
 
         if res == 200:
             print(res)
@@ -316,8 +317,6 @@ def tabela(data, page, update_app):
         ft.CupertinoButton(text="Atualizar o status",bgcolor=ft.colors.GREEN_700,on_click=addTransferencia)
         ])
         page.update()
-    inicio_l=ft.TextField(label="Inicio das ferias ex:28/11/2024")
-    fim_l=ft.TextField(label="Fim das ferias ex:28/11/2024")
     progressBar_status=ft.ProgressBar(color="amber", bgcolor="#eeeeee",visible=False)
     
     erro_status_dlg=ft.AlertDialog(title=ft.Text("Ocorreu um erro"), content=ft.Row(controls=[
@@ -336,8 +335,8 @@ def tabela(data, page, update_app):
         page.update()
         dados={
             "funcionario_id": selected_id,
-            "data_inicio_ferias": inicio_l.value,
-            "data_fim_ferias": fim_l.value
+            "data_inicio_ferias": str(inicio_l.value),
+            "data_fim_ferias": str(fim_l.value)
             }
         url="http://192.168.1.62:8000/add_ferias"
         res=requests.post(url=url,json=dados)
@@ -346,6 +345,7 @@ def tabela(data, page, update_app):
             progressBar_status.visible=False
             page.dialog=sucess_status_dlg
             sucess_status_dlg.open=True
+            update_app(page)
             page.update()
         else:
             status_dlg.open=False
@@ -369,6 +369,7 @@ def tabela(data, page, update_app):
             progressBar_status.visible=False
             page.dialog=sucess_status_dlg
             sucess_status_dlg.open=True
+            update_app(page)
             page.update()
         else:
             status_dlg.open=False
@@ -392,6 +393,7 @@ def tabela(data, page, update_app):
             progressBar_status.visible=False
             page.dialog=sucess_status_dlg
             sucess_status_dlg.open=True
+            update_app(page)
             page.update()
         else:
             status_dlg.open=False
@@ -414,6 +416,7 @@ def tabela(data, page, update_app):
             progressBar_status.visible=False
             page.dialog=sucess_status_dlg
             sucess_status_dlg.open=True
+            update_app(page)
             page.update()
         else:
             status_dlg.open=False
@@ -436,6 +439,7 @@ def tabela(data, page, update_app):
             progressBar_status.visible=False
             page.dialog=sucess_status_dlg
             sucess_status_dlg.open=True
+            update_app(page)
             page.update()
         else:
             status_dlg.open=False
@@ -444,13 +448,54 @@ def tabela(data, page, update_app):
             erro_status_dlg.open=True
             page.update()
 
+    #licenca
+    def done_i(e):
+        inicio_l.open=False
+        inicio_licenca_demo.content=ft.Text(inicio_l.value)
+        page.update()
+    def done_f(e):
+        fim_l.open=False
+        fim_licenca_demo.content=ft.Text(inicio_l.value)
 
+        page.update()
 
-        #licenca
+    def open_start(e):
+        inicio_l.open=True
+        page.update()
+
+    def open_end(e):
+        fim_l.open=True
+        page.update()
+
+    
+    inicio_l=ft.DatePicker(
+                    first_date=datetime(year=2000, month=1, day=1),
+                    last_date=datetime(year=datetime.now().year+1, month=datetime.now().month, day=datetime.now().day),
+                    open=False,
+                    on_change=done_i         
+
+                )
+    fim_l=ft.DatePicker(
+                   first_date=datetime(year=2000, month=1, day=1),
+                    last_date=datetime(year=datetime.now().year+3, month=datetime.now().month, day=datetime.now().day),
+                    open=False,
+                    on_change=done_f
+                )
+    inicio_licenca_demo=ft.Container(content=ft.Text("Inicio das ferias"))
+    fim_licenca_demo=ft.Container(content=ft.Text("Fim das ferias"))
+    start=ft.Row(controls=[
+        ft.IconButton(icon=ft.icons.CALENDAR_MONTH,on_click=open_start),inicio_licenca_demo
+    ])
+    end=ft.Row(controls=[
+        ft.IconButton(icon=ft.icons.CALENDAR_MONTH,on_click=open_end),fim_licenca_demo
+    ])
+    
+
+    
     def show_input_l(e):
         status_dlg.content=ft.Column(height=260,controls=[
         ft.Text("Atualizar a Disponiblidade",weight="bold"),
-        status,inicio_l,fim_l,
+        status,start,end,inicio_l,fim_l,
         progressBar_status,
         ft.CupertinoButton(text="Atualizar o status",bgcolor=ft.colors.GREEN_700,on_click=addFerias)
         ])
@@ -583,11 +628,23 @@ def tabela(data, page, update_app):
         page.update()
         
     def deletar(e):
-        print(selected_id)
+        progressBar_status.visible=True
+        page.update()
         res = DeleteEmployerByID(selected_id)
-        print(res)
-        delete_dlg.open = False
-        update_app(page)
+        if res==200:
+            page.dialog=sucess_status_dlg
+            delete_dlg.open = False
+            sucess_status_dlg.open=True
+            progressBar_status.visible=False
+            update_app(page)
+            page.update()
+        else:
+            page.dialog=erro_status_dlg
+            erro_status_dlg.open=True
+            delete_dlg.open = False
+            progressBar_status.visible=False
+            update_app(page)
+            page.update()
     
         
 
@@ -597,7 +654,10 @@ def tabela(data, page, update_app):
         page.update()
 
     delete_dlg = ft.AlertDialog(title=ft.Text("Aviso"), 
-                          content=ft.Text("Tens Certeza que queres Deletar \n o funcionario?"), actions=[
+                          content=ft.Column(height=50,controls=[
+                              ft.Text("Tens Certeza que queres Deletar \n o funcionario?"),
+                              progressBar_status
+                          ]), actions=[
                               ft.ElevatedButton("Cancelar", on_click=cancela),
                               ft.ElevatedButton("Eliminar", bgcolor=ft.colors.RED_700, color="white", on_click=deletar)
                           ])
