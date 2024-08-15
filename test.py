@@ -1,3 +1,4 @@
-from controls import*
+from controls import getFuncionarios
+from pdf_printer import print_employer
 
-licenca_to_active()
+print_employer(getFuncionarios()[1])

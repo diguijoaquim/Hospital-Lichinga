@@ -1,12 +1,14 @@
 import flet as ft
-from controls import getFuncionarios, DeleteEmployerByID, UpdateEmployer, GetEmployerByID,getSectores
+from controls import *
 from datetime import datetime
 import re
 import requests
 from time import sleep
 import math
+from pdf_printer import *
 
 selected_id = 0
+funcionario=None
 
 def home(page):
     return ft.Column()
@@ -23,8 +25,6 @@ def getChart():
         weight=ft.FontWeight.BOLD,
         shadow=ft.BoxShadow(blur_radius=2, color=ft.colors.BLACK54),
     )
-    normal_badge_size = 40
-    hover_badge_size = 50
     def on_chart_event(e: ft.PieChartEvent):
         for idx, section in enumerate(chart.sections):
             if idx == e.section_index:
@@ -103,6 +103,7 @@ def assistente(page):
     def enviar(e):
         chatList.controls.clear()
         chatList.controls.append(ft.Text(f"Usuario: >>> {input.value}", color=ft.colors.GREEN_700, size=24, weight="bold")),
+        input.value=''
         page.update()
         responder(input.value)
 
@@ -303,10 +304,10 @@ def tabela(data, page, update_app):
     def fecha(e):
         show_dlg.open=False
         page.update()
-        
+    funcionario=None
     show_dlg=ft.AlertDialog(title=ft.Text(''),content=ft.Container(ft.ProgressRing()),actions=[
         ft.ElevatedButton("fechar",bgcolor=ft.colors.RED_700,color='white',on_click=fecha),
-        ft.ElevatedButton("Imprimir",bgcolor=ft.colors.GREEN_700,color='white')
+        ft.ElevatedButton("Imprimir",bgcolor=ft.colors.GREEN_700,color='white',on_click=lambda e:print_employer(funcionario))
     ])
     input_to=ft.TextField(label="Foi Trasferido para que hospital?")
     def show_input_t(e):
@@ -534,9 +535,6 @@ def tabela(data, page, update_app):
         ])
         page.update()  
     
-
-
-    
     status=ft.Dropdown(label="Status",options=[
         ft.dropdown.Option(text="Activo",on_click=show_input_d),
         ft.dropdown.Option(text="Transferido",on_click=show_input_t),
@@ -564,11 +562,19 @@ def tabela(data, page, update_app):
         page.update()
         
 
+    def salvar_para_pdf(e):
+        global selected_id
+        selected_id = e.control.data
+        global funcionario
+        funcionario=GetEmployerByID(selected_id).json()
+        print_employer(funcionario)
+
     def open_show(e):
         global selected_id
         selected_id = e.control.data
         page.dialog = show_dlg
         show_dlg.open = True
+        global funcionario
         funcionario=GetEmployerByID(selected_id).json()
         nascimento = re.split("-", funcionario['nascimento'])
         idade = datetime.now().year - int(nascimento[0])
@@ -670,6 +676,7 @@ def tabela(data, page, update_app):
             ft.DataColumn(ft.Text("Enfermaria")),
             ft.DataColumn(ft.Text("Repartição")),
             ft.DataColumn(ft.Text("Ano de Início")),
+            ft.DataColumn(ft.Text("Estado")),
             ft.DataColumn(ft.Text("Ações")),
         ],
         border_radius=10,
@@ -677,10 +684,75 @@ def tabela(data, page, update_app):
         
         
     )
-    
+    def return_active(e):
+        res=licenca_to_active(e.control.data)
+        if res == 200:
+            update_app(page)
+
     for funcionario in data:
         nascimento = re.split("-", funcionario['nascimento'])
         idade = datetime.now().year - int(nascimento[0])
+        if funcionario['status']=="ACTIVO":
+            sinal=ft.Container(width=100,height=25,bgcolor=ft.colors.GREEN_600,border_radius=5,
+                                       content=ft.Row(controls=[ft.Text(funcionario['status'],color="white",weight='bold')]
+                                                      ,alignment=ft.MainAxisAlignment.CENTER))
+            
+        elif funcionario['status'] =="LICENCA":
+            sinal=ft.Container(border=ft.border.all(1),width=100,height=25,bgcolor=ft.colors.GREEN_200,border_radius=5,
+                                       content=ft.Row(controls=[ft.Text(funcionario['status'],color="white",weight='bold')]
+                                                      ,alignment=ft.MainAxisAlignment.CENTER))
+        elif funcionario['status'] =="Removido":
+            sinal=ft.Container(width=100,height=25,bgcolor=ft.colors.RED_500,border_radius=5,
+                                       content=ft.Row(controls=[ft.Text(funcionario['status'],color="white",weight='bold')]
+                                                      ,alignment=ft.MainAxisAlignment.CENTER))
+        elif funcionario['status'] =="TRANSFERIDO":
+            sinal=ft.Container(width=100,height=25,bgcolor=ft.colors.PURPLE_500,border_radius=5,
+                                       content=ft.Row(controls=[ft.Text(funcionario['status'],color="white",weight='bold')]
+                                                      ,alignment=ft.MainAxisAlignment.CENTER))
+
+        else:
+            sinal=ft.Container(width=100,height=25,bgcolor=ft.colors.ORANGE_500,border_radius=5,
+                                       content=ft.Row(controls=[ft.Text(funcionario['status'],color="white",weight='bold')]
+                                                      ,alignment=ft.MainAxisAlignment.CENTER))
+        
+        if funcionario['status']=="Removido":
+            butoes=[
+                ft.PopupMenuItem(text="Restaura",on_click=return_active,data=f"{funcionario['id']}"),
+                ft.PopupMenuItem(text="Ver Dados",on_click=open_show,data=f"{funcionario['id']}"),
+                ft.PopupMenuItem(text="Salvar em PDF",on_click=salvar_para_pdf,data=f"{funcionario['id']}")
+            ] 
+        elif funcionario['status']=="FALECIDO":
+            butoes=[
+                ft.PopupMenuItem(text="Ver Dados",on_click=open_show,data=f"{funcionario['id']}"),
+                ft.PopupMenuItem(text="Salvar em PDF",on_click=salvar_para_pdf,data=f"{funcionario['id']}"),
+            ]
+        elif funcionario['status']=="APOSENTADO":
+            butoes=[
+                ft.PopupMenuItem(text="Ver Dados",on_click=open_show,data=f"{funcionario['id']}"),
+                ft.PopupMenuItem(text="Salvar em PDF",on_click=salvar_para_pdf,data=f"{funcionario['id']}"),
+            ]
+        elif funcionario['status']=="SUSPENSO":
+            butoes=[
+                ft.PopupMenuItem(text="Restaura",on_click=open_update,data=f"{funcionario['id']}"),
+                ft.PopupMenuItem(text="Ver Dados",on_click=open_show,data=f"{funcionario['id']}"),
+                ft.PopupMenuItem(text="Salvar em PDF",on_click=salvar_para_pdf,data=f"{funcionario['id']}"),
+            ]
+        elif funcionario['status']=="TRANSFERIDO":
+            butoes=[
+                ft.PopupMenuItem(text="Restaura",on_click=return_active,data=f"{funcionario['id']}"),
+                ft.PopupMenuItem(text="Ver Dados",on_click=open_show,data=f"{funcionario['id']}"),
+                ft.PopupMenuItem(text="Salvar em PDF",on_click=salvar_para_pdf,data=f"{funcionario['id']}"),
+            ]
+
+        else:
+            butoes=[
+                ft.PopupMenuItem(text="Atualizar",on_click=open_update,data=f"{funcionario['id']}"),
+                ft.PopupMenuItem(text="Ver Dados",on_click=open_show,data=f"{funcionario['id']}"),
+                ft.PopupMenuItem(text="Salvar em PDF",on_click=salvar_para_pdf,data=f"{funcionario['id']}"),
+                ft.PopupMenuItem(text="Disponiblidade",on_click=open_status,data=f"{funcionario['id']}"),
+                ft.PopupMenuItem(text="Deletar",on_click=open_delete,data=f"{funcionario['id']}")
+            ] 
+
         t.rows.append(
 
             ft.DataRow(
@@ -690,15 +762,10 @@ def tabela(data, page, update_app):
                     ft.DataCell(ft.Text(idade)),
                     ft.DataCell(ft.Text(funcionario['sector'])),
                     ft.DataCell(ft.Text(funcionario['reparticao'])),
-                    ft.DataCell(ft.Text(funcionario['inicio_funcoes'])),
+                    ft.DataCell(ft.Text(formatar_data(funcionario['inicio_funcoes']))),
+                    ft.DataCell(sinal),
                     ft.DataCell(ft.Row(controls=[
-                        ft.PopupMenuButton(items=[
-                            ft.PopupMenuItem(text="Atualizar",on_click=open_update,data=f"{funcionario['id']}"),
-                            ft.PopupMenuItem(text="Ver Dados",on_click=open_show,data=f"{funcionario['id']}"),
-                            ft.PopupMenuItem(text="Salvar em PDF",on_click=open_show,data=f"{funcionario['id']}"),
-                            ft.PopupMenuItem(text="Disponiblidade",on_click=open_status,data=f"{funcionario['id']}"),
-                            ft.PopupMenuItem(text="Deletar",on_click=open_delete,data=f"{funcionario['id']}")
-                        ])
+                        ft.PopupMenuButton(items=butoes)
                     ])),
                 
                 ],

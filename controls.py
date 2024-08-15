@@ -2,6 +2,7 @@ import requests
 from save_token import *
 import json
 from datetime import datetime
+import locale
 #aqui sao controlers do app main.py
 token=get_token()
 
@@ -147,7 +148,7 @@ def getSuspensedEmployers():
     return []
 
 def getEmployerLicenca():
-    url = 'http://192.168.1.62:8000/emp/reformados'
+    url = 'http://192.168.1.62:8000/emp/licencas'
     try:
         response = requests.get(url, headers=headers)
         response.raise_for_status()  
@@ -181,7 +182,7 @@ def addEmployer(data):
     return response.status_code
 
 def UpdateEmployer(data,id):
-    url = f'http://192.168.1.62:8000/employers/{id}'
+    url = f'http://192.168.1.62:8000/employer/{id}'
     response = requests.put(url, headers=headers,json=data)
     if response.status_code == 200:
         data = response.json()
@@ -295,11 +296,11 @@ def getRestante(data_inicio, data_fim):
         return (inicio - agora).days
     # Se as férias começaram mas não terminaram, retornar a diferença entre o fim e agora
     elif inicio <= agora <= fim:
-        return (fim - agora).days
+        return (fim - agora).days + 1  # +1 para incluir o dia final
     # Se as férias já terminaram, retornar 0
     else:
         return 0
-    
+
 # Função para calcular a duração total das férias
 def getDays(data_inicio, data_fim):
     # Converter strings para objetos datetime
@@ -309,19 +310,47 @@ def getDays(data_inicio, data_fim):
     diferenca = fim - inicio
     return diferenca.days
 
-def getCustomFerias():
-    ferias =getFerias()
-    customFerias=[]
-    for feria in ferias:
-        customFerias.append({"funcionario":feria['nome'],
-            'dias_restantes':getRestante(data_inicio=feria['data_inicio_ferias'],
-                                        data_fim=feria['data_fim_ferias']),
-                                        'dias':getDays(feria['data_inicio_ferias'],
-                                                        data_fim=feria['data_fim_ferias']),
-                                        'inicio':feria['data_inicio_ferias'],
-                                        'fim':feria['data_fim_ferias']})
-    return customFerias
 
+
+
+
+def formatar_data(data_str):
+    locale.setlocale(locale.LC_TIME, 'pt_BR.UTF-8')
+    try:
+        # Tenta primeiro com o formato ISO completo com milissegundos
+        data = datetime.strptime(data_str, "%Y-%m-%dT%H:%M:%S.%f")
+    except ValueError:
+        try:
+            # Tenta com o formato ISO sem milissegundos
+            data = datetime.strptime(data_str, "%Y-%m-%dT%H:%M:%S")
+        except ValueError:
+            try:
+                # Tenta com o formato sem o tempo
+                data = datetime.strptime(data_str, "%Y-%m-%d")
+            except ValueError:
+                raise ValueError(f"Formato de data inválido: {data_str}")
+    
+    # Retorna a data no formato desejado
+    return data.strftime("%d de %B de %Y")
+
+
+def getCustomFerias():
+    ferias = getEmployerLicenca()
+    customFerias = []
+
+    for feria in ferias:
+        for item in feria['ferias']:  # Itera sobre a lista 'ferias'
+            customFerias.append({
+                "funcionario": feria['nome'],
+                'dias_restantes': getRestante(data_inicio=item['data_inicio_ferias'], data_fim=item['data_fim_ferias']),
+                'dias': getDays(data_inicio=item['data_inicio_ferias'], data_fim=item['data_fim_ferias']),
+                'inicio': item['data_inicio_ferias'],
+                'fim': item['data_fim_ferias']
+            })
+
+    return customFerias
+            
+    
 def licenca_to_active(id):
     dados = {
         "status": 'ACTIVO',

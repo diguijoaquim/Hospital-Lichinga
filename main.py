@@ -10,12 +10,14 @@ import asyncio
 
 token=''
 
+
 employers=[]
 deletedEmployers=[]
 deathEmployers=[]
 licenseEmployers=[]
 suspensoEmployers=[]
 trasferidos=[]
+curent_page="home"
 
 
 progess_page= ft.AlertDialog(open=True,content=ft.Row(height=30,width=100,controls=[ft.ProgressRing(),ft.Text("Caregando...",weight="bold")]))
@@ -29,11 +31,12 @@ def restart_app():
     os.execl(python, python, *sys.argv)
 
 def main(page: ft.Page):
+   
     page.title = "Hospital de Lichinga"
-    page.theme_mode = ft.ThemeMode.LIGHT
+    page.theme_mode = 'light'
     page.horizontal_alignment = ft.CrossAxisAlignment.CENTER
     page.vertical_alignment = ft.MainAxisAlignment.CENTER
-    global employers,setores,suspensoEmployers,licenseEmployers
+    global employers,setores,suspensoEmployers,licenseEmployers,curent_page
     demo_erro=ft.Container()
     page.padding = 0
     page.add(
@@ -73,7 +76,7 @@ def main(page: ft.Page):
 
 
     def atualizar_app(page):
-        print(check_isLoged())
+        #print(check_isLoged())
         login_dialog.open=False
         global psiquiatria_card,medicina1_card,laboratorio_card,maternidade_card
         username_input.value=''
@@ -100,9 +103,18 @@ def main(page: ft.Page):
             laboratorio_card=laboratorio(setores['Laboratorio'])
             maternidade_card=maternidade(setores['Maternidade'])
             funcionarios=getFuncionarios()
-            body.content=page_home
-            update_employer(funcionarios)
             update_home(funcionarios)
+            update_employer(funcionarios)
+            
+            if curent_page=="home":
+                body.content=page_home
+            elif curent_page=='employers':
+                body.content=page_employers
+            else:
+                pass
+            page.update()
+            
+           
         else:
             psiquiatria_card=psiquiatria(0)
             medicina1_card=medicina(0)
@@ -152,7 +164,6 @@ def main(page: ft.Page):
         elif filtrar.value =="Estado":
             if estado.value=="DELETADO":
                 update_employer(getDeletedEmployers())
-                print(deletedEmployers)
             elif estado.value=="ACTIVO":
                 update_employer(getFuncionarios())
             elif estado.value=="APOSENTADO":
@@ -217,11 +228,11 @@ def main(page: ft.Page):
 
             novosdados = await asyncio.to_thread(getFuncionarios)
             setores=await asyncio.to_thread(getSectores)
-            deletedEmployers= await asyncio.to_thread(getDeletedEmployers())
-            suspensoEmployers=await asyncio.to_thread(getSuspensedEmployers())
-            licenseEmployers=await asyncio.to_thread(getEmployerLicenca())
-            deathEmployers=await asyncio.to_thread(getDeathEmployers())
-            trasferidos=await asyncio.to_thread(getTrasferidoEmployers())
+            deletedEmployers= await asyncio.to_thread(getDeletedEmployers)
+            suspensoEmployers=await asyncio.to_thread(getSuspensedEmployers)
+            licenseEmployers=await asyncio.to_thread(getEmployerLicenca)
+            deathEmployers=await asyncio.to_thread(getDeathEmployers)
+            trasferidos=await asyncio.to_thread(getTrasferidoEmployers)
 
             if novosdados != employers:
                 update_home(novosdados)
@@ -230,7 +241,7 @@ def main(page: ft.Page):
                 page.update()
                 employers = novosdados  # Atualiza a variável global com os novos dados
             else:
-                print("Nenhuma mudança nos dados.")
+                pass
                 
         else:
             body.content = page_employers
@@ -475,7 +486,7 @@ def main(page: ft.Page):
                 page.update()
                 employers = novosdados  # Atualiza a variável global com os novos dados
             else:
-                print("Nenhuma mudança nos dados.")
+                pass
                 
         else:
             body.content = page_employers
@@ -516,26 +527,45 @@ def main(page: ft.Page):
                         ft.DataCell(ft.Text(feria['funcionario'],weight='bold')),
                         ft.DataCell(ft.Text(feria['dias'])),
                         ft.DataCell(ft.Text(feria['dias_restantes'],weight='bold')),
-                        ft.DataCell(ft.Text(feria['inicio'])),
-                        ft.DataCell(ft.Text(feria['fim'])),
+                        ft.DataCell(ft.Text(formatar_data(feria['inicio']))),
+                        ft.DataCell(ft.Text(formatar_data(feria['fim']))),
                         ft.DataCell(sinal),
                         
                     ],
                 ),
                 )
-            page_licenca.content=tabela
+            def search_emp_licenca(e):
+                asyncio.run(employersLicenca)
+
+            find=ft.TextField(label="procurar")
+            page_licenca.content=ft.Column(controls=[
+                ft.Row(height=160,controls=[
+                    ft.Card(content=ft.Container(padding=10,content=ft.Column(controls=[
+                        ft.Text("Filtrar Os Funcionarios em Licenca/Ferias",weight='bold',size=25,color=ft.colors.GREY_700),
+                        ft.Row(controls=[
+                            find,ft.CupertinoButton("buscar",bgcolor=ft.colors.GREEN_600,on_click=search_emp_licenca)
+                        ],alignment=ft.MainAxisAlignment.CENTER)
+                    ],alignment=ft.MainAxisAlignment.CENTER)))
+                ]),
+                tabela
+            ])
             page.update()
             
 
     def  change_page(e):
+        global curent_page
         index=e.control.selected_index
         if index==0:
+            curent_page='home'
             asyncio.run(atualizar_home())
         elif index==1:
+            curent_page="employers"
             asyncio.run(atualizar_employers())
         elif index==2:
+            curent_page='licenca'
             asyncio.run(employersLicenca())
         elif index==3:
+            curent_page='assistent'
             body.content=page_assistente
             page.update()
         elif index==4:
@@ -812,8 +842,10 @@ def main(page: ft.Page):
     def change_mode(e):
         if page.theme_mode=='light':
             page.theme_mode='dark'
+            page.appbar.bgcolor=ft.colors.PURPLE_900
         else:
             page.theme_mode='light'
+            page.appbar.bgcolor=ft.colors.GREEN_700
         page.update()
     page.appbar = ft.AppBar(
         bgcolor=ft.colors.GREEN_700,
