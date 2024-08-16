@@ -8,7 +8,7 @@ import os
 from pdf_printer import create_pdf
 import asyncio
 
-token=''
+
 
 
 employers=[]
@@ -18,7 +18,7 @@ licenseEmployers=[]
 suspensoEmployers=[]
 trasferidos=[]
 curent_page="home"
-
+card_changed=False
 
 progess_page= ft.AlertDialog(open=True,content=ft.Row(height=30,width=100,controls=[ft.ProgressRing(),ft.Text("Caregando...",weight="bold")]))
         
@@ -31,12 +31,22 @@ def restart_app():
     os.execl(python, python, *sys.argv)
 
 def main(page: ft.Page):
-   
     page.title = "Hospital de Lichinga"
     page.theme_mode = 'light'
     page.horizontal_alignment = ft.CrossAxisAlignment.CENTER
     page.vertical_alignment = ft.MainAxisAlignment.CENTER
+    token=''
     global employers,setores,suspensoEmployers,licenseEmployers,curent_page
+
+    token=page.client_storage.get('token')
+    set_headers(token)
+    def check_isLoged():
+        t= page.client_storage.get('token')
+        print(t)
+        if t != None:
+            return True
+        else:
+            False
     demo_erro=ft.Container()
     page.padding = 0
     page.add(
@@ -74,11 +84,13 @@ def main(page: ft.Page):
     password_input = ft.TextField(label="Senha", password=True)
     result_text = ft.Text("")
 
+    async def update_card():
+        global psiquiatria_card,medicina1_card,laboratorio_card,maternidade_card,setores
+        setores=await asyncio.to_thread(getSectores)
 
-    def atualizar_app(page):
-        #print(check_isLoged())
+    def atualizar_app(page,card_changed=False):
         login_dialog.open=False
-        global psiquiatria_card,medicina1_card,laboratorio_card,maternidade_card
+        global psiquiatria_card,medicina1_card,laboratorio_card,maternidade_card,setores
         username_input.value=''
         password_input.value=''
         nome.value = ''
@@ -96,12 +108,17 @@ def main(page: ft.Page):
         inicio_funcoes.value = ''
         nascimento_demo.content=ft.Text('')
         funcoes_demo.content=ft.Text('')
+
         
+
         if check_isLoged()==True:
-            psiquiatria_card=psiquiatria(setores['Psiquiatria'])
-            medicina1_card=medicina(setores['Medicina 1'])
-            laboratorio_card=laboratorio(setores['Laboratorio'])
-            maternidade_card=maternidade(setores['Maternidade'])
+            if card_changed:
+                asyncio.run(update_card())
+            else:
+                psiquiatria_card=psiquiatria(setores['Psiquiatria'])
+                medicina1_card=medicina(setores['Medicina 1'])
+                laboratorio_card=laboratorio(setores['Laboratório'])
+                maternidade_card=maternidade(setores['Maternidade'])
             funcionarios=getFuncionarios()
             update_home(funcionarios)
             update_employer(funcionarios)
@@ -112,7 +129,7 @@ def main(page: ft.Page):
                 body.content=page_employers
             else:
                 pass
-            page.update()
+            
             
            
         else:
@@ -133,15 +150,23 @@ def main(page: ft.Page):
     
 
     def _login(e):
-        login(username_input.value,password_input.value)
+        progressbar.visible=True
+        page.update()
+        res=login(username_input.value,password_input.value)
+        if res.status_code == 200:
+            token = res.json()['access_token']
+            headers['Authorization'] = f"Bearer {token}"
+            page.client_storage.set("token",token)
+        progressbar.visible=False
         atualizar_app(getFuncionarios())
-
+    progressbar=ft.ProgressBar(color="amber", bgcolor="#eeeeee",visible=False)
     login_dialog = ft.AlertDialog(
         title=ft.Text("Entrar no sistema"),
         content=ft.Column(height=200,controls=[
             username_input,
             password_input,
             result_text,
+            progressbar,
             ft.CupertinoButton(text="Entar no Sistema",bgcolor=ft.colors.GREEN_700,width=300,color="white",on_click=_login)
         ]),
         on_dismiss=_check,
@@ -253,7 +278,7 @@ def main(page: ft.Page):
     def update_home(data=employers):
         psiquiatria_card=psiquiatria(setores['Psiquiatria'])
         medicina1_card=medicina(setores['Medicina 1'])
-        laboratorio_card=laboratorio(setores['Laboratorio'])
+        laboratorio_card=laboratorio(setores['Laboratório'])
         maternidade_card=maternidade(setores['Maternidade'])
         page_home.controls.clear()
         page_home.controls.append(ft.Column(controls=[
@@ -288,13 +313,11 @@ def main(page: ft.Page):
     
     def done_f(e):
         value=re.split(" ",str(funcoes.value))
-        print(value[0])
         funcoes_demo.content=ft.Text(value[0])
         page.update()
 
     def done(e):
         value=re.split(" ",str(nascimento.value))
-        print(value[0])
         nascimento_demo.content=ft.Text(value[0])
         page.update()
     nascimento_demo=ft.Container()
@@ -438,7 +461,6 @@ def main(page: ft.Page):
 
     def find_searching(e):
         datas=update_employer(getFuncionariosByQuery(e.control.value))
-        print(datas)
         page.update()
 
     #telas
@@ -575,7 +597,7 @@ def main(page: ft.Page):
             atualizar_app(page)
             pass
         elif index==7:
-            remove_token()
+            page.client_storage.remove('token')
             atualizar_app(page)
         else:
             page.window_close()
@@ -669,22 +691,261 @@ def main(page: ft.Page):
             ft.dropdown.Option('65+ anos: Idosos')
         ]
     )
-    categoria=ft.Dropdown(label="Categoria", options=[
+    categoria = ft.Dropdown(
+    label="Categoria",
+    options=[
         ft.dropdown.Option("Agente de farmácia"),
         ft.dropdown.Option("Agente de Medicina preventiva"),
         ft.dropdown.Option("Agente de serviço"),
         ft.dropdown.Option("Assistente Administrativo D"),
         ft.dropdown.Option("Assistente técnico"),
         ft.dropdown.Option("Auxiliar administrativo"),
-        ft.dropdown.Option("Auxiliar De Farmácia"),
+        ft.dropdown.Option("Auxiliar de Farmácia"),
         ft.dropdown.Option("Carpinteiro"),
-        ft.dropdown.Option("Condutor de veículos de serviço")
-    ] )
+        ft.dropdown.Option("Condutor de veículos de serviço"),
+        ft.dropdown.Option("Cozinheiro"),
+        ft.dropdown.Option("Documentalista A"),
+        ft.dropdown.Option("Enfermeira Pediatra"),
+        ft.dropdown.Option("Enfermeira Saúde Materno-Infantil"),
+        ft.dropdown.Option("Enfermeiro"),
+        ft.dropdown.Option("Enfermeiro A"),
+        ft.dropdown.Option("Enfermeiro de SMI A"),
+        ft.dropdown.Option("Enfermeiro Geral"),
+        ft.dropdown.Option("Enfermeiro Geral Especializado"),
+        ft.dropdown.Option("Especialista de Saúde"),
+        ft.dropdown.Option("Farmacêutico A"),
+        ft.dropdown.Option("Fisioterapeuta A"),
+        ft.dropdown.Option("Inspeção Superior"),
+        ft.dropdown.Option("Jurista A"),
+        ft.dropdown.Option("Médica Hospitalar Assistente"),
+        ft.dropdown.Option("Médico de Clínica Geral"),
+        ft.dropdown.Option("Médico de Clínica Geral de 1A"),
+        ft.dropdown.Option("Médico de Clínica Geral de 2A"),
+        ft.dropdown.Option("Médico Dentista"),
+        ft.dropdown.Option("Médico Hospitalar Assistente"),
+        ft.dropdown.Option("Nutricionista A"),
+        ft.dropdown.Option("Outra"),
+        ft.dropdown.Option("Psicólogo A"),
+        ft.dropdown.Option("Servente de unidades sanitárias"),
+        ft.dropdown.Option("Técnico"),
+        ft.dropdown.Option("Técnico administrativo C"),
+        ft.dropdown.Option("Técnico de Ação Social B"),
+        ft.dropdown.Option("Técnico de Odontoestomatologia"),
+        ft.dropdown.Option("Técnico de Oftalmologia"),
+        ft.dropdown.Option("Técnico de Optometria A"),
+        ft.dropdown.Option("Técnico de Psiquiatria e Saúde Mental"),
+        ft.dropdown.Option("Técnico de Radiologia"),
+        ft.dropdown.Option("Técnico de Radiologia A"),
+        ft.dropdown.Option("Técnico Especializado de Saúde"),
+        ft.dropdown.Option("Técnico Profissional"),
+        ft.dropdown.Option("Técnico de Laboratório"),
+        ft.dropdown.Option("Técnico de Laboratório A"),
+        ft.dropdown.Option("Técnico de Manutenção D"),
+        ft.dropdown.Option("Técnico de Medicina"),
+        ft.dropdown.Option("Técnico de Medicina Física e Reabilitação"),
+        ft.dropdown.Option("Técnico de Nutrição"),
+        ft.dropdown.Option("Técnico de Administração Hospitalar"),
+        ft.dropdown.Option("Técnico de Anestesiologia"),
+        ft.dropdown.Option("Técnico de Cirurgia A"),
+        ft.dropdown.Option("Técnico de Electromedicina"),
+        ft.dropdown.Option("Técnico de Electrónica C"),
+        ft.dropdown.Option("Técnico de Estatística Sanitária"),
+        ft.dropdown.Option("Técnico de Farmácia"),
+        ft.dropdown.Option("Técnico de Instrumentação")
+    ]
+)
+
     nuit=ft.TextField(label="Nuit" )
 
    
     
     bi=ft.TextField(label="Numero de BI" )
+    def change_province(e):
+        if provincia.value == "Niassa":
+            naturalidade.options = [
+                ft.dropdown.Option("Cuamba"),
+                ft.dropdown.Option("Lago"),
+                ft.dropdown.Option("Lichinga"),
+                ft.dropdown.Option("Majune"),
+                ft.dropdown.Option("Mandimba"),
+                ft.dropdown.Option("Marrupa"),
+                ft.dropdown.Option("Maúa"),
+                ft.dropdown.Option("Mavago"),
+                ft.dropdown.Option("Mecanhelas"),
+                ft.dropdown.Option("Mecula"),
+                ft.dropdown.Option("Metarica"),
+                ft.dropdown.Option("Muembe"),
+                ft.dropdown.Option("Ngauma"),
+                ft.dropdown.Option("N'gauma"),
+                ft.dropdown.Option("Nipepe"),
+                ft.dropdown.Option("Sanga"),
+            ]
+        elif provincia.value == "Nampula":
+            naturalidade.options = [
+                ft.dropdown.Option("Angoche"),
+                ft.dropdown.Option("Eráti"),
+                ft.dropdown.Option("Ilha de Moçambique"),
+                ft.dropdown.Option("Lalaua"),
+                ft.dropdown.Option("Malema"),
+                ft.dropdown.Option("Meconta"),
+                ft.dropdown.Option("Mecubúri"),
+                ft.dropdown.Option("Memba"),
+                ft.dropdown.Option("Mogincual"),
+                ft.dropdown.Option("Mogovolas"),
+                ft.dropdown.Option("Moma"),
+                ft.dropdown.Option("Monapo"),
+                ft.dropdown.Option("Mossuril"),
+                ft.dropdown.Option("Muecate"),
+                ft.dropdown.Option("Murrupula"),
+                ft.dropdown.Option("Nacala-a-Velha"),
+                ft.dropdown.Option("Nacala Porto"),
+                ft.dropdown.Option("Nampula"),
+                ft.dropdown.Option("Rapale"),
+                ft.dropdown.Option("Ribaué"),
+            ]
+        elif provincia.value == "Cabo Delgado":
+            naturalidade.options = [
+                ft.dropdown.Option("Ancuabe"),
+                ft.dropdown.Option("Balama"),
+                ft.dropdown.Option("Chiúre"),
+                ft.dropdown.Option("Ibo"),
+                ft.dropdown.Option("Macomia"),
+                ft.dropdown.Option("Mecúfi"),
+                ft.dropdown.Option("Meluco"),
+                ft.dropdown.Option("Metuge"),
+                ft.dropdown.Option("Mocímboa da Praia"),
+                ft.dropdown.Option("Montepuez"),
+                ft.dropdown.Option("Mueda"),
+                ft.dropdown.Option("Muidumbe"),
+                ft.dropdown.Option("Namuno"),
+                ft.dropdown.Option("Nangade"),
+                ft.dropdown.Option("Palma"),
+                ft.dropdown.Option("Pemba"),
+                ft.dropdown.Option("Quissanga"),
+            ]
+        elif provincia.value == "Zambézia":
+            naturalidade.options = [
+                ft.dropdown.Option("Alto Molócue"),
+                ft.dropdown.Option("Chinde"),
+                ft.dropdown.Option("Derre"),
+                ft.dropdown.Option("Gilé"),
+                ft.dropdown.Option("Gurué"),
+                ft.dropdown.Option("Ile"),
+                ft.dropdown.Option("Inhassunge"),
+                ft.dropdown.Option("Luabo"),
+                ft.dropdown.Option("Lugela"),
+                ft.dropdown.Option("Maganja da Costa"),
+                ft.dropdown.Option("Milange"),
+                ft.dropdown.Option("Mocuba"),
+                ft.dropdown.Option("Mopeia"),
+                ft.dropdown.Option("Morrumbala"),
+                ft.dropdown.Option("Mulevala"),
+                ft.dropdown.Option("Namacurra"),
+                ft.dropdown.Option("Namarroi"),
+                ft.dropdown.Option("Nicoadala"),
+                ft.dropdown.Option("Pebane"),
+                ft.dropdown.Option("Quelimane"),
+            ]
+        elif provincia.value == "Tete":
+            naturalidade.options = [
+                ft.dropdown.Option("Angónia"),
+                ft.dropdown.Option("Cahora-Bassa"),
+                ft.dropdown.Option("Changara"),
+                ft.dropdown.Option("Chifunde"),
+                ft.dropdown.Option("Chiuta"),
+                ft.dropdown.Option("Doa"),
+                ft.dropdown.Option("Macanga"),
+                ft.dropdown.Option("Magoé"),
+                ft.dropdown.Option("Marávia"),
+                ft.dropdown.Option("Marávia"),
+                ft.dropdown.Option("Moatize"),
+                ft.dropdown.Option("Mutarara"),
+                ft.dropdown.Option("Tsangano"),
+                ft.dropdown.Option("Zumbo"),
+            ]
+        elif provincia.value == "Sofala":
+            naturalidade.options = [
+                ft.dropdown.Option("Beira"),
+                ft.dropdown.Option("Búzi"),
+                ft.dropdown.Option("Caia"),
+                ft.dropdown.Option("Chemba"),
+                ft.dropdown.Option("Cheringoma"),
+                ft.dropdown.Option("Chibabava"),
+                ft.dropdown.Option("Dondo"),
+                ft.dropdown.Option("Gorongosa"),
+                ft.dropdown.Option("Machanga"),
+                ft.dropdown.Option("Maringué"),
+                ft.dropdown.Option("Marromeu"),
+                ft.dropdown.Option("Nhamatanda"),
+            ]
+        elif provincia.value == "Manica":
+            naturalidade.options = [
+                ft.dropdown.Option("Bárue"),
+                ft.dropdown.Option("Chimoio"),
+                ft.dropdown.Option("Gondola"),
+                ft.dropdown.Option("Guro"),
+                ft.dropdown.Option("Macate"),
+                ft.dropdown.Option("Machaze"),
+                ft.dropdown.Option("Macossa"),
+                ft.dropdown.Option("Manica"),
+                ft.dropdown.Option("Mavonde"),
+                ft.dropdown.Option("Mossurize"),
+                ft.dropdown.Option("Sussundenga"),
+                ft.dropdown.Option("Tambara"),
+            ]
+        elif provincia.value == "Inhambane":
+            naturalidade.options = [
+                ft.dropdown.Option("Funhalouro"),
+                ft.dropdown.Option("Govuro"),
+                ft.dropdown.Option("Homoíne"),
+                ft.dropdown.Option("Inhambane"),
+                ft.dropdown.Option("Inharrime"),
+                ft.dropdown.Option("Inhassoro"),
+                ft.dropdown.Option("Jangamo"),
+                ft.dropdown.Option("Massinga"),
+                ft.dropdown.Option("Maxixe"),
+                ft.dropdown.Option("Morrumbene"),
+                ft.dropdown.Option("Panda"),
+                ft.dropdown.Option("Vilanculos"),
+                ft.dropdown.Option("Zavala"),
+            ]
+        elif provincia.value == "Gaza":
+            naturalidade.options = [
+                ft.dropdown.Option("Bilene"),
+                ft.dropdown.Option("Chibuto"),
+                ft.dropdown.Option("Chicualacuala"),
+                ft.dropdown.Option("Chigubo"),
+                ft.dropdown.Option("Chókwè"),
+                ft.dropdown.Option("Guijá"),
+                ft.dropdown.Option("Mabalane"),
+                ft.dropdown.Option("Manjacaze"),
+                ft.dropdown.Option("Mapai"),
+                ft.dropdown.Option("Massangena"),
+                ft.dropdown.Option("Massingir"),
+                ft.dropdown.Option("Xai-Xai"),
+            ]
+        elif provincia.value == "Maputo":
+            naturalidade.options = [
+                ft.dropdown.Option("Boane"),
+                ft.dropdown.Option("Magude"),
+                ft.dropdown.Option("Manhiça"),
+                ft.dropdown.Option("Marracuene"),
+                ft.dropdown.Option("Matola"),
+                ft.dropdown.Option("Matutuíne"),
+                ft.dropdown.Option("Moamba"),
+                ft.dropdown.Option("Namaacha"),
+            ]
+        elif provincia.value == "Cidade de Maputo":
+            naturalidade.options = [
+                ft.dropdown.Option("Distrito Urbano 1"),
+                ft.dropdown.Option("Distrito Urbano 2"),
+                ft.dropdown.Option("Distrito Urbano 3"),
+                ft.dropdown.Option("Distrito Urbano 4"),
+                ft.dropdown.Option("Distrito Urbano 5"),
+            ]
+            
+        page.update()
+
     provincia = ft.Dropdown(
             label="Província",
             options=[
@@ -698,7 +959,8 @@ def main(page: ft.Page):
                 ft.dropdown.Option("Nampula"),
                 ft.dropdown.Option("Cabo Delgado"),
                 ft.dropdown.Option("Niassa")
-            ]
+            ],
+            on_change=change_province
         )
     provincia_s = ft.Dropdown(
             label="Província",
@@ -716,9 +978,27 @@ def main(page: ft.Page):
                 ft.dropdown.Option("Niassa")
             ]
         )
+    
+    naturalidade=ft.Dropdown(label="Natualidade")
+    residencia = ft.Dropdown(
+    label="Residencia",
+    options=[
+        ft.dropdown.Option("Estação"),
+        ft.dropdown.Option("Cimento"),
+        ft.dropdown.Option("Cerâmica"),
+        ft.dropdown.Option("Barragem"),
+        ft.dropdown.Option("Liberdade"),
+        ft.dropdown.Option("Missão"),
+        ft.dropdown.Option("Chiuaula"),
+        ft.dropdown.Option("Sanjala"),
+        ft.dropdown.Option("Lurio"),
+        ft.dropdown.Option("Chuilucuto"),
+        ft.dropdown.Option("Namacula"),
+        ft.dropdown.Option("Mutapassa"),
+        ]
+    )
 
-    naturalidade=ft.TextField(label="Natualidade")
-    residencia=ft.TextField(label="Residencia"  )
+
     sexo=ft.Dropdown(
         label="Sexo",
         options=[
@@ -762,7 +1042,7 @@ def main(page: ft.Page):
 
     perfil=ft.AlertDialog(title=ft.Text("Perfil"),)
     def seeprofile(e):
-        usuario=getUser()
+        usuario=getUser(token)
 
         perfil.content=ft.Column(height=140,controls=[
                 ft.Row(
@@ -783,7 +1063,7 @@ def main(page: ft.Page):
 
 
     def log_out(e):
-        remove_token()
+        page.client_storage.remove("token")
         atualizar_app(page)
 
     
@@ -816,10 +1096,10 @@ def main(page: ft.Page):
         "password":new_pass.value}
         status_code=NovoUsuario(data)
         if status_code ==200:
-            print("cadastrado")
+            #print("cadastrado")
             alert_s()
         else:
-            print("ocoreu um erro")
+            #print("ocoreu um erro")
             alert_e()
 
     def new_user(e):

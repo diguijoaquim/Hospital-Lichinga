@@ -1,41 +1,38 @@
 import requests
-from save_token import *
 import json
 from datetime import datetime
 import locale
 #aqui sao controlers do app main.py
-token=get_token()
 
 
+headers = {}
+
+def set_headers(token):
+    global headers
+    headers = {
+        'accept': 'application/json',
+        'Authorization': f"Bearer {token}"
+    }
 
 
 def login(n, s):
-    global token, headers
     data = {
         'username': n,
         'password': s
     }
-    res = requests.post("http://192.168.1.62:8000/token", data=data)
-    if res.status_code == 200:
-        token = res.json()['access_token']
-        save_token(token)
-        # Atualizar os cabeçalhos após login
-        headers['Authorization'] = f"Bearer {token}"
-    return res.json()
-
-def getUser():
-    url = 'http://192.168.1.62:8000/users/me'
+    res = requests.post("https://hospital-fast-api.onrender.com/token", data=data)
+    return res 
+    
+def getUser(token):
+    url = 'https://hospital-fast-api.onrender.com/users/me'
     res=requests.get(url=url,headers=headers)
     return res.json()
 # Controlador para as requisições
-headers = {
-    'accept': 'application/json',
-    'Authorization': f"Bearer {token}"
-}
+
 
 
 def getFuncionarios():
-    url = 'http://192.168.1.62:8000/employers/'
+    url = 'https://hospital-fast-api.onrender.com/employers/'
     try:
         response = requests.get(url, headers=headers)
         response.raise_for_status()  
@@ -51,7 +48,7 @@ def getFuncionarios():
     return []
 
 def getReformados():
-    url = 'http://192.168.1.62:8000/emp/reformados/'
+    url = 'https://hospital-fast-api.onrender.com/emp/reformados/'
     try:
         response = requests.get(url, headers=headers)
         response.raise_for_status()  
@@ -68,7 +65,7 @@ def getReformados():
         
 
 def getDeletedEmployers():
-    url = 'http://192.168.1.62:8000/removido/'
+    url = 'https://hospital-fast-api.onrender.com/removido/'
     try:
         response = requests.get(url, headers=headers)
         response.raise_for_status()  
@@ -84,7 +81,7 @@ def getDeletedEmployers():
     return []
 
 def getDeathEmployers():
-    url = 'http://192.168.1.62:8000/emp/falecidos/'
+    url = 'https://hospital-fast-api.onrender.com/emp/falecidos/'
     try:
         response = requests.get(url, headers=headers)
         response.raise_for_status()  
@@ -100,7 +97,7 @@ def getDeathEmployers():
     return []
 
 def getReformado():
-    url = 'http://192.168.1.62:8000/emp/reformados'
+    url = 'https://hospital-fast-api.onrender.com/emp/reformados'
     try:
         response = requests.get(url, headers=headers)
         response.raise_for_status()  
@@ -116,7 +113,7 @@ def getReformado():
     return []
 
 def getTrasferidoEmployers():
-    url = 'http://192.168.1.62:8000/emp/transferidos/'
+    url = 'https://hospital-fast-api.onrender.com/emp/transferidos/'
     try:
         response = requests.get(url, headers=headers)
         response.raise_for_status()  
@@ -132,7 +129,7 @@ def getTrasferidoEmployers():
     return []
 
 def getSuspensedEmployers():
-    url = 'http://192.168.1.62:8000/emp/suspensos'
+    url = 'https://hospital-fast-api.onrender.com/emp/suspensos'
     try:
         response = requests.get(url, headers=headers)
         response.raise_for_status()  
@@ -148,7 +145,7 @@ def getSuspensedEmployers():
     return []
 
 def getEmployerLicenca():
-    url = 'http://192.168.1.62:8000/emp/licencas'
+    url = 'https://hospital-fast-api.onrender.com/emp/licencas'
     try:
         response = requests.get(url, headers=headers)
         response.raise_for_status()  
@@ -164,11 +161,11 @@ def getEmployerLicenca():
     return []
 
 def GetEmployerByID(id):
-    url = f'http://192.168.1.62:8000/employer/{id}'
+    url = f'https://hospital-fast-api.onrender.com/employer/{id}'
     return requests.get(url, headers=headers)
     
 def getFuncionariosByQuery(query):
-    url = f'http://192.168.1.62:8000/getbysearch/?name={query}'
+    url = f'https://hospital-fast-api.onrender.com/getbysearch/?name={query}'
     response = requests.get(url, headers=headers)
     if response.status_code == 200:
         data = response.json()
@@ -177,12 +174,12 @@ def getFuncionariosByQuery(query):
     return []
 
 def addEmployer(data):
-    url = 'http://192.168.1.62:8000/employers/'
+    url = 'https://hospital-fast-api.onrender.com/employers/'
     response = requests.post(url, headers=headers, json=data)
     return response.status_code
 
 def UpdateEmployer(data,id):
-    url = f'http://192.168.1.62:8000/employer/{id}'
+    url = f'https://hospital-fast-api.onrender.com/employer/{id}'
     response = requests.put(url, headers=headers,json=data)
     if response.status_code == 200:
         data = response.json()
@@ -191,7 +188,7 @@ def UpdateEmployer(data,id):
     return response.status_code
 
 def getEmployerByGenre(genre):
-    url = f'http://192.168.1.62:8000/employers/genre/{genre}'
+    url = f'https://hospital-fast-api.onrender.com/employers/genre/{genre}'
     response = requests.get(url, headers=headers)
     if response.status_code == 200:
         data = response.json()
@@ -200,7 +197,7 @@ def getEmployerByGenre(genre):
     return []
 
 def getEmployerByProvince(p):
-    url = f'http://192.168.1.62:8000/employers/province/{p}'
+    url = f'https://hospital-fast-api.onrender.com/employers/province/{p}'
     response = requests.get(url, headers=headers)
     if response.status_code == 200:
         data = response.json()
@@ -209,7 +206,7 @@ def getEmployerByProvince(p):
     return []
 
 def getEmployerByReparticao(r):
-    url = f'http://192.168.1.62:8000/employers/reparticao/{r}'
+    url = f'https://hospital-fast-api.onrender.com/employers/reparticao/{r}'
     try:
         response = requests.get(url, headers=headers)
         if response.status_code == 200:
@@ -219,7 +216,7 @@ def getEmployerByReparticao(r):
     except:
         return []
 def getEmployerBySector(s):
-    url = f'http://192.168.1.62:8000/employers/sector/{s}'
+    url = f'https://hospital-fast-api.onrender.com/employers/sector/{s}'
     try:
         response = requests.get(url, headers=headers)
         if response.status_code == 200:
@@ -229,7 +226,7 @@ def getEmployerBySector(s):
     except:
         return []
 def DeleteEmployerByID(id):
-    url = f'http://192.168.1.62:8000/employers/{id}'
+    url = f'https://hospital-fast-api.onrender.com/employers/{id}'
     response = requests.delete(url, headers=headers)
     if response.status_code == 200:
         data = response.status_code
@@ -249,7 +246,7 @@ def check_token(t):
             'Authorization': f"Bearer {t}"
         }
 
-            url = 'http://192.168.1.62:8000/employers/'
+            url = 'https://hospital-fast-api.onrender.com/employers/'
             response = requests.get(url, headers=header)
             if response.status_code == 200:
                 data = response.json()
@@ -258,7 +255,7 @@ def check_token(t):
                 
 def getSectores():
     try:
-        res=requests.get("http://192.168.1.62:8000/employers/sectors")
+        res=requests.get("https://hospital-fast-api.onrender.com/employers/sectors")
         return res.json()
     except:
         return "network_error"
@@ -266,7 +263,7 @@ def getSectores():
 
 
 def NovoUsuario(data):
-    url = 'http://192.168.1.62:8000/users/' 
+    url = 'https://hospital-fast-api.onrender.com/users/' 
     res=requests.post(url,json=data)   
 
     return res.status_code 
@@ -274,7 +271,7 @@ def NovoUsuario(data):
 
 
 def getFerias():
-    url='http://192.168.1.62:8000/ferias'
+    url='https://hospital-fast-api.onrender.com/ferias'
     res=requests.get(url)
     if res.status_code==200:
         return res.json()

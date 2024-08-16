@@ -96,7 +96,7 @@ def assistente(page):
         pergunta = {
             "text": p
         }
-        resposta = requests.post(url="http://192.168.1.62:8000/dina", json=pergunta)
+        resposta = requests.post(url="https://hospital-fast-api.onrender.com/dina", json=pergunta)
         chatList.controls.append(ft.Text(f"Assistente: >>>{resposta.json()}", size=20, weight="bold", no_wrap=False,color=ft.colors.GREY_600)),
         page.update()
 
@@ -177,15 +177,12 @@ def tabela(data, page, update_app):
         page.update()
         sleep(3)
         res = UpdateEmployer(data=dados, id=selected_id)
-
-
-
         if res == 200:
-            print(res)
+            #print(res)
             show_success_dialog()
             progressBar_update.visible = False
             atualizar_dialogo.open = False
-            update_app(page)
+            update_app(page,True)
             page.update()
 
         elif res == 422:
@@ -280,7 +277,7 @@ def tabela(data, page, update_app):
         global selected_id
         global sexo_update
         selected_id = e.control.data
-        print(selected_id)
+        #print(selected_id)
         atualizar_dialogo.open = True
         page.update()
         dados = GetEmployerByID(selected_id).json()
@@ -339,7 +336,7 @@ def tabela(data, page, update_app):
             "data_inicio_ferias": str(inicio_l.value),
             "data_fim_ferias": str(fim_l.value)
             }
-        url="http://192.168.1.62:8000/add_ferias"
+        url="https://hospital-fast-api.onrender.com/add_ferias"
         res=requests.post(url=url,json=dados)
         if res.status_code==200:
             status_dlg.open=False
@@ -363,7 +360,7 @@ def tabela(data, page, update_app):
             "data_falecimento": "2024-08-07T13:14:43.172Z",
             "idade": 0
             }
-        url="http://192.168.1.62:8000/add_falecido"
+        url="https://hospital-fast-api.onrender.com/add_falecido"
         res=requests.post(url=url,json=dados)
         if res.status_code==200:
             status_dlg.open=False
@@ -387,7 +384,7 @@ def tabela(data, page, update_app):
             "data_reforma": "2024-08-07T13:19:47.729Z",
             "idade_reforma": 0
             }
-        url="http://192.168.1.62:8000/add_reforma"
+        url="https://hospital-fast-api.onrender.com/add_reforma"
         res=requests.post(url=url,json=dados)
         if res.status_code==200:
             status_dlg.open=False
@@ -410,7 +407,7 @@ def tabela(data, page, update_app):
             "data_transferido": "2024-08-07T13:06:28.092Z",
             "lugar_transferido": input_to.value
             }
-        url="http://192.168.1.62:8000/add_transferencia"
+        url="https://hospital-fast-api.onrender.com/add_transferencia"
         res=requests.post(url=url,json=dados)
         if res.status_code==200:
             status_dlg.open=False
@@ -433,7 +430,7 @@ def tabela(data, page, update_app):
             "data_suspenso": "2024-08-07T13:29:23.725Z",
             "motivo": motivo.value
             }
-        url="http://192.168.1.62:8000/add_suspenso"
+        url="https://hospital-fast-api.onrender.com/add_suspenso"
         res=requests.post(url=url,json=dados)
         if res.status_code==200:
             status_dlg.open=False
@@ -797,7 +794,7 @@ def laboratorio(valor):
         content=ft.Container(
             content=ft.Column(
                 [
-                    ft.Text("Laboratorio", size=20, weight="bold",color='white'),
+                    ft.Text("Laboratório", size=20, weight="bold",color='white'),
                     ft.Text(valor,size=40,color='white'),
                 ],
                 alignment=ft.MainAxisAlignment.CENTER,
